@@ -8,17 +8,11 @@
 <script setup>
 let ws;
 let audioContext;
-let destination;
 let bufferQueue = [];
 let isPlaying = false;
 
 const startListening = async () => {
     audioContext = new AudioContext();
-    destination = audioContext.createMediaStreamDestination();
-
-    const audioEl = new Audio();
-    audioEl.srcObject = destination.stream;
-    await audioEl.play(); // requiere interacción del usuario
 
     ws = new WebSocket("wss://prueba-radio.onrender.com/ws/streaming/");
     ws.binaryType = "arraybuffer";
@@ -50,7 +44,7 @@ const processQueue = () => {
 
     const source = audioContext.createBufferSource();
     source.buffer = audioBuffer;
-    source.connect(destination);
+    source.connect(audioContext.destination); // conectar directamente al audio del usuario
     source.start();
 
     source.onended = () => processQueue();
