@@ -1,9 +1,7 @@
 <template>
     <div class="receiver">
         <h2>Audio en vivo</h2>
-        <button @click="startListening">
-            Activar Receptor
-        </button>
+        <button @click="startListening">Activar Receptor</button>
     </div>
 </template>
 
@@ -12,17 +10,17 @@ import { ref } from 'vue';
 
 let ws;
 let audioContext;
-let bufferQueue = [];
+let audioQueue = [];
 let isPlaying = false;
 const listening = ref(false);
 
 const startListening = async () => {
     if (listening.value) return;
 
-    // Crear AudioContext
+    // Crear AudioContext y forzar resume
     audioContext = new AudioContext();
+    await audioContext.resume();
 
-    // WebSocket
     ws = new WebSocket("wss://prueba-radio.onrender.com/ws/streaming/");
     ws.binaryType = "arraybuffer";
 
@@ -32,48 +30,47 @@ const startListening = async () => {
     };
 
     ws.onmessage = (event) => {
-        bufferQueue.push(event.data);
-        if (!isPlaying) processQueue();
+        if (event.data.byteLength > 0) {
+            audioQueue.push(event.data);
+            if (!isPlaying) playQueue();
+        }
     };
 };
 
-// Función que procesa la cola de audio
-const processQueue = () => {
-    if (bufferQueue.length === 0) {
+const playQueue = () => {
+    if (audioQueue.length === 0) {
         isPlaying = false;
         return;
     }
+
     isPlaying = true;
 
-    const arrayBuffer = bufferQueue.shift();
-    const int16Array = new Int16Array(arrayBuffer);
-    const float32Array = new Float32Array(int16Array.length);
+    const buffer = audioQueue.shift();
+    const int16 = new Int16Array(buffer);
+    const float32 = new Float32Array(int16.length);
 
-    // Conversión int16 -> float32
-    for (let i = 0; i < int16Array.length; i++) {
-        float32Array[i] = int16Array[i] < 0
-            ? int16Array[i] / 0x8000
-            : int16Array[i] / 0x7fff;
+    // Convertir int16 -> float32
+    for (let i = 0; i < int16.length; i++) {
+        float32[i] = int16[i] < 0 ? int16[i] / 0x8000 : int16[i] / 0x7fff;
     }
 
     // Crear AudioBuffer
     const audioBuffer = audioContext.createBuffer(
         1,
-        float32Array.length,
+        float32.length,
         audioContext.sampleRate
     );
-    audioBuffer.getChannelData(0).set(float32Array);
+    audioBuffer.getChannelData(0).set(float32);
 
-    // Crear BufferSource y reproducirlo
     const source = audioContext.createBufferSource();
     source.buffer = audioBuffer;
     source.connect(audioContext.destination);
     source.start();
 
-    // Cuando termina, procesar el siguiente buffer
-    source.onended = () => processQueue();
+    source.onended = () => playQueue();
 };
 </script>
+
 
 <style scoped>
 .receiver {
