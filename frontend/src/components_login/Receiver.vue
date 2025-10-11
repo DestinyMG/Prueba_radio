@@ -6,13 +6,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 
 let ws;
-const listening = ref(false);
 let audioContext;
-let queue = [];
+let audioQueue = [];
 let isPlaying = false;
+const listening = ref(false);
 
 const startListening = async () => {
     if (listening.value) return;
@@ -28,35 +28,44 @@ const startListening = async () => {
         listening.value = true;
     };
 
-    ws.onmessage = async (event) => {
+    ws.onmessage = (event) => {
         if (event.data.byteLength > 0) {
-            queue.push(event.data);
+            audioQueue.push(event.data);
             if (!isPlaying) playQueue();
         }
     };
 };
 
-const playQueue = async () => {
-    if (queue.length === 0) {
+const playQueue = () => {
+    if (audioQueue.length === 0) {
         isPlaying = false;
         return;
     }
 
     isPlaying = true;
-    const buffer = queue.shift();
-    try {
-        const audioBuffer = await audioContext.decodeAudioData(buffer);
-        const source = audioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(audioContext.destination);
-        source.start();
 
-        source.onended = () => playQueue();
-    } catch (err) {
-        console.error("Error decodificando audio:", err);
-        // Continuar con siguiente chunk
-        playQueue();
+    const buffer = audioQueue.shift();
+    const int16 = new Int16Array(buffer);
+    const float32 = new Float32Array(int16.length);
+
+    // Convertir Int16 -> Float32
+    for (let i = 0; i < int16.length; i++) {
+        float32[i] = int16[i] < 0 ? int16[i] / 0x8000 : int16[i] / 0x7fff;
     }
+
+    const audioBuffer = audioContext.createBuffer(
+        1,
+        float32.length,
+        audioContext.sampleRate
+    );
+    audioBuffer.getChannelData(0).set(float32);
+
+    const source = audioContext.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(audioContext.destination);
+    source.start();
+
+    source.onended = () => playQueue();
 };
 </script>
 

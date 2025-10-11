@@ -11,7 +11,9 @@ import { ref } from 'vue';
 
 const transmitting = ref(false);
 let ws;
-let mediaRecorder;
+let audioContext;
+let processor;
+let source;
 let stream;
 
 const toggleTransmit = async () => {
@@ -24,27 +26,36 @@ const toggleTransmit = async () => {
 
             // Capturar audio
             stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioContext = new AudioContext();
+            source = audioContext.createMediaStreamSource(stream);
 
-            // Usar MediaRecorder para enviar audio en chunks
-            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm; codecs=opus' });
-
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0 && ws.readyState === WebSocket.OPEN) {
-                    e.data.arrayBuffer().then(buffer => ws.send(buffer));
+            // ScriptProcessorNode para capturar PCM
+            processor = audioContext.createScriptProcessor(4096, 1, 1);
+            processor.onaudioprocess = (e) => {
+                const input = e.inputBuffer.getChannelData(0);
+                const buffer = new ArrayBuffer(input.length * 2);
+                const view = new DataView(buffer);
+                for (let i = 0; i < input.length; i++) {
+                    let s = Math.max(-1, Math.min(1, input[i]));
+                    view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
                 }
+                if (ws.readyState === WebSocket.OPEN) ws.send(buffer);
             };
 
-            mediaRecorder.start(250); // enviar cada 250ms
+            source.connect(processor);
+            // No conectar processor a audioContext.destination para evitar reproducción local
             transmitting.value = true;
         };
     } else {
-        if (mediaRecorder) mediaRecorder.stop();
-        if (stream) stream.getTracks().forEach(track => track.stop());
-        if (ws) ws.close();
+        processor.disconnect();
+        source.disconnect();
+        stream.getTracks().forEach(track => track.stop());
+        ws.close();
         transmitting.value = false;
     }
 };
 </script>
+
 
 
 <style scoped>
