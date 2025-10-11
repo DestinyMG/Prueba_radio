@@ -2,24 +2,38 @@
     <div class="receiver">
         <h2>Audio en vivo</h2>
         <button @click="startListening">Activar Receptor</button>
+        <audio ref="audioEl" autoplay></audio>
     </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 
+const audioEl = ref(null);
 let ws;
-let audioContext;
-let audioQueue = [];
-let isPlaying = false;
+let mediaSource;
+let sourceBuffer;
+let queue = [];
+let isAppending = false;
 const listening = ref(false);
 
 const startListening = async () => {
     if (listening.value) return;
 
-    audioContext = new AudioContext();
-    await audioContext.resume();
+    mediaSource = new MediaSource();
+    audioEl.value.src = URL.createObjectURL(mediaSource);
 
+    mediaSource.addEventListener('sourceopen', () => {
+        sourceBuffer = mediaSource.addSourceBuffer('audio/webm; codecs="opus"');
+        sourceBuffer.mode = 'sequence';
+
+        sourceBuffer.addEventListener('updateend', () => {
+            isAppending = false;
+            appendNextChunk();
+        });
+    });
+
+    // Conectar WebSocket
     ws = new WebSocket("wss://prueba-radio.onrender.com/ws/streaming/");
     ws.binaryType = "arraybuffer";
 
@@ -29,43 +43,27 @@ const startListening = async () => {
     };
 
     ws.onmessage = (event) => {
-        if (event.data.byteLength > 0) {
-            audioQueue.push(event.data);
-            if (!isPlaying) playQueue();
-        }
+        queue.push(event.data);
+        appendNextChunk();
     };
+
+    ws.onclose = () => console.log("WebSocket cerrado");
+    ws.onerror = (err) => console.error("WebSocket error:", err);
 };
 
-const playQueue = () => {
-    if (audioQueue.length === 0) {
-        isPlaying = false;
-        return;
+// Función para reproducir chunks de audio en MediaSource
+const appendNextChunk = () => {
+    if (!sourceBuffer || isAppending || queue.length === 0) return;
+
+    isAppending = true;
+    const chunk = queue.shift();
+    try {
+        sourceBuffer.appendBuffer(new Uint8Array(chunk));
+    } catch (err) {
+        console.error("Error appending buffer:", err);
+        isAppending = false;
+        queue.unshift(chunk); // reintentar
     }
-
-    isPlaying = true;
-
-    const buffer = audioQueue.shift();
-    const int16 = new Int16Array(buffer);
-    const float32 = new Float32Array(int16.length);
-
-    // Convertir Int16 -> Float32
-    for (let i = 0; i < int16.length; i++) {
-        float32[i] = int16[i] < 0 ? int16[i] / 0x8000 : int16[i] / 0x7fff;
-    }
-
-    const audioBuffer = audioContext.createBuffer(
-        1,
-        float32.length,
-        audioContext.sampleRate
-    );
-    audioBuffer.getChannelData(0).set(float32);
-
-    const source = audioContext.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(audioContext.destination);
-    source.start();
-
-    source.onended = () => playQueue();
 };
 </script>
 

@@ -11,51 +11,46 @@ import { ref } from 'vue';
 
 const transmitting = ref(false);
 let ws;
-let audioContext;
-let processor;
-let source;
+let mediaRecorder;
 let stream;
 
 const toggleTransmit = async () => {
     if (!transmitting.value) {
+        // Conectar al WebSocket
         ws = new WebSocket("wss://prueba-radio.onrender.com/ws/streaming/");
         ws.binaryType = "arraybuffer";
 
         ws.onopen = async () => {
             console.log("Conectado al WebSocket");
 
-            // Capturar audio
+            // Capturar micrófono
             stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            audioContext = new AudioContext();
-            source = audioContext.createMediaStreamSource(stream);
 
-            // ScriptProcessorNode para capturar PCM
-            processor = audioContext.createScriptProcessor(4096, 1, 1);
-            processor.onaudioprocess = (e) => {
-                const input = e.inputBuffer.getChannelData(0);
-                const buffer = new ArrayBuffer(input.length * 2);
-                const view = new DataView(buffer);
-                for (let i = 0; i < input.length; i++) {
-                    let s = Math.max(-1, Math.min(1, input[i]));
-                    view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+            // MediaRecorder con Opus
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm; codecs=opus' });
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0 && ws.readyState === WebSocket.OPEN) {
+                    e.data.arrayBuffer().then(buffer => ws.send(buffer));
                 }
-                if (ws.readyState === WebSocket.OPEN) ws.send(buffer);
             };
 
-            source.connect(processor);
-            // No conectar processor a audioContext.destination para evitar reproducción local
+            mediaRecorder.start(250); // enviar cada 250ms
             transmitting.value = true;
         };
+
+        ws.onclose = () => console.log("WebSocket cerrado");
+        ws.onerror = (err) => console.error("WebSocket error:", err);
+
     } else {
-        processor.disconnect();
-        source.disconnect();
-        stream.getTracks().forEach(track => track.stop());
-        ws.close();
+        // Detener transmisión
+        if (mediaRecorder) mediaRecorder.stop();
+        if (stream) stream.getTracks().forEach(track => track.stop());
+        if (ws) ws.close();
         transmitting.value = false;
     }
 };
 </script>
-
 
 
 <style scoped>
