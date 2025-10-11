@@ -1,7 +1,6 @@
 <template>
     <div class="receiver">
         <h2>Audio en vivo</h2>
-        <button @click="startListening">Activar Receptor</button>
         <audio ref="audioEl" autoplay></audio>
     </div>
 </template>
@@ -15,11 +14,13 @@ let mediaSource;
 let sourceBuffer;
 let queue = [];
 let isAppending = false;
-const listening = ref(false);
+
+onMounted(() => {
+    startListening();
+});
 
 const startListening = async () => {
-    if (listening.value) return;
-
+    // Crear MediaSource para reproducir chunks de Opus/WebM
     mediaSource = new MediaSource();
     audioEl.value.src = URL.createObjectURL(mediaSource);
 
@@ -37,10 +38,7 @@ const startListening = async () => {
     ws = new WebSocket("wss://prueba-radio.onrender.com/ws/streaming/");
     ws.binaryType = "arraybuffer";
 
-    ws.onopen = () => {
-        console.log("Receptor conectado al WebSocket");
-        listening.value = true;
-    };
+    ws.onopen = () => console.log("Receptor conectado al WebSocket");
 
     ws.onmessage = (event) => {
         queue.push(event.data);
@@ -51,7 +49,6 @@ const startListening = async () => {
     ws.onerror = (err) => console.error("WebSocket error:", err);
 };
 
-// Función para reproducir chunks de audio en MediaSource
 const appendNextChunk = () => {
     if (!sourceBuffer || isAppending || queue.length === 0) return;
 
