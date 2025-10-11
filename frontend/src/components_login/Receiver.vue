@@ -20,7 +20,7 @@ const startListening = async () => {
     audioEl.srcObject = destination.stream;
     await audioEl.play(); // requiere interacción del usuario
 
-    ws = new WebSocket("ws://localhost:8000/ws/streaming/");
+    ws = new WebSocket("wss://prueba-radio.onrender.com/ws/streaming/");
     ws.binaryType = "arraybuffer";
 
     ws.onopen = () => console.log("Receptor conectado al WebSocket");

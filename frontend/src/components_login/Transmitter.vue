@@ -18,7 +18,7 @@ let stream;
 
 const toggleTransmit = async () => {
     if (!transmitting.value) {
-        ws = new WebSocket("ws://localhost:8000/ws/streaming/");
+        ws = new WebSocket("wss://prueba-radio.onrender.com/ws/streaming/");
         ws.binaryType = "arraybuffer";
 
         ws.onopen = () => console.log("Conectado al WebSocket");

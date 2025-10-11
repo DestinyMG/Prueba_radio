@@ -56,16 +56,16 @@ const showModal = ref(false);
 // 🔹 Función para actualizar el estado de aviso en la API
 const setAvisoActivo = async (activo, audioId = null, audioFile = null) => {
     try {
-        const payload = { 
+        const payload = {
             activo: activo,
             audio_file: audioFile // URL completa del audio
         };
-        
+
         if (activo && audioId) {
             payload.audio_id = audioId;
         }
 
-        await axios.put('https://api.kyeroradio.com/api2/aviso/2/', payload);
+        await axios.put('https://prueba-radio.onrender.com/api2/aviso/2/', payload);
 
     } catch (error) {
         // Error actualizando aviso
@@ -82,9 +82,10 @@ const playAudio = async (audio) => {
     }
 
     // Construir URL completa del archivo de audio
-    const audioFileUrl = audio.file.startsWith('http') 
-        ? audio.file 
-        : `http://localhost:8000${audio.file}`;
+    const audioFileUrl = audio.file.startsWith('http')
+        ? audio.file
+        : `https://prueba-radio.onrender.com${audio.file}`;
+
 
     // Activar el aviso en el backend PRIMERO
     await setAvisoActivo(true, audio.id, audioFileUrl);
@@ -96,7 +97,7 @@ const playAudio = async (audio) => {
 
     try {
         await audioPlayer.value.play();
-        
+
         // Cuando termina la canción automáticamente
         audioPlayer.value.onended = async () => {
             await stopAudio();
@@ -118,10 +119,10 @@ const stopAudio = async () => {
         audioPlayer.value.pause();
         audioPlayer.value.currentTime = 0;
     }
-    
+
     isPlaying.value = false;
     currentAudioId.value = null;
-    
+
     // Desactivar el aviso en el backend
     await setAvisoActivo(false);
 };
@@ -131,7 +132,7 @@ const togglePlay = async (audio) => {
     // Si es el mismo audio y está reproduciendo, pausar
     if (currentAudioId.value === audio.id && isPlaying.value) {
         await stopAudio();
-    } 
+    }
     // Si es otro audio o no está reproduciendo, reproducir
     else {
         await playAudio(audio);
@@ -156,7 +157,7 @@ const deleteAudio = async (id) => {
             if (currentAudioId.value === id && isPlaying.value) {
                 await stopAudio();
             }
-            
+
             await api.delete(`audios/${id}/`);
             audios.value = audios.value.filter(a => a.id !== id);
         } catch (error) {
@@ -187,10 +188,10 @@ const formatDate = (dateStr) => {
 // 🔹 Verificar si hay audio programado (para reproducción automática por hora)
 const checkScheduledAudios = () => {
     const now = new Date();
-    
+
     audios.value.forEach(audio => {
         const scheduledTime = new Date(audio.play_date);
-        
+
         // Si es la hora programada y no está reproduciéndose
         if (Math.abs(scheduledTime - now) < 60000 && // dentro de 1 minuto
             currentAudioId.value !== audio.id) {
@@ -201,7 +202,7 @@ const checkScheduledAudios = () => {
 
 onMounted(() => {
     fetchAudios();
-    
+
     // Verificar audios programados cada 30 segundos
     setInterval(checkScheduledAudios, 30000);
 });
