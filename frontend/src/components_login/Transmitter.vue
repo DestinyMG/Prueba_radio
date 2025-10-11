@@ -54,7 +54,6 @@ const toggleTransmit = async () => {
 };
 </script>
 
-
 <style scoped>
 .transmitter {
     display: flex;
