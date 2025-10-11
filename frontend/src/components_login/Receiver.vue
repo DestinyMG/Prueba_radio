@@ -7,65 +7,68 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 
 const audioEl = ref(null);
 let ws;
-let mediaSource;
-let sourceBuffer;
+let audioContext;
+let source;
 let queue = [];
-let isAppending = false;
+let isPlaying = false;
+let processing = false;
 const listening = ref(false);
 
 const startListening = async () => {
     if (listening.value) return;
 
-    mediaSource = new MediaSource();
-    audioEl.value.src = URL.createObjectURL(mediaSource);
+    // Crear contexto de audio Web
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-    mediaSource.addEventListener('sourceopen', () => {
-        sourceBuffer = mediaSource.addSourceBuffer('audio/webm; codecs="opus"');
-        sourceBuffer.mode = 'sequence';
-
-        sourceBuffer.addEventListener('updateend', () => {
-            isAppending = false;
-            appendNextChunk();
-        });
-    });
-
-    // Conectar WebSocket
+    // Conectar WebSocket al servidor
     ws = new WebSocket("wss://prueba-radio.onrender.com/ws/streaming/");
     ws.binaryType = "arraybuffer";
 
     ws.onopen = () => {
-        console.log("Receptor conectado al WebSocket");
+        console.log("🎧 Receptor conectado al WebSocket");
         listening.value = true;
     };
 
-    ws.onmessage = (event) => {
+    ws.onmessage = async (event) => {
+        // Guardar los datos recibidos
         queue.push(event.data);
-        appendNextChunk();
+        if (!processing) processQueue();
     };
 
-    ws.onclose = () => console.log("WebSocket cerrado");
+    ws.onclose = () => {
+        console.log("❌ WebSocket cerrado");
+        listening.value = false;
+    };
+
     ws.onerror = (err) => console.error("WebSocket error:", err);
 };
 
-// Función para reproducir chunks de audio en MediaSource
-const appendNextChunk = () => {
-    if (!sourceBuffer || isAppending || queue.length === 0) return;
+// Procesar los chunks de audio que llegan
+const processQueue = async () => {
+    if (processing) return;
+    processing = true;
 
-    isAppending = true;
-    const chunk = queue.shift();
-    try {
-        sourceBuffer.appendBuffer(new Uint8Array(chunk));
-    } catch (err) {
-        console.error("Error appending buffer:", err);
-        isAppending = false;
-        queue.unshift(chunk); // reintentar
+    while (queue.length > 0 && audioContext.state !== "closed") {
+        const chunk = queue.shift();
+        try {
+            const audioBuffer = await audioContext.decodeAudioData(await chunk.slice(0).arrayBuffer());
+            const bufferSource = audioContext.createBufferSource();
+            bufferSource.buffer = audioBuffer;
+            bufferSource.connect(audioContext.destination);
+            bufferSource.start();
+        } catch (err) {
+            console.error("Error procesando audio:", err);
+        }
     }
+
+    processing = false;
 };
 </script>
+
 
 
 
