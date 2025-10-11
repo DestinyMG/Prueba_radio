@@ -2,6 +2,7 @@
     <div class="receiver">
         <h2>Audio en vivo</h2>
         <button @click="startListening">Activar Receptor</button>
+        <audio ref="audio" autoplay></audio>
     </div>
 </template>
 
@@ -9,17 +10,11 @@
 import { ref } from 'vue';
 
 let ws;
-let audioContext;
-let audioQueue = [];
-let isPlaying = false;
 const listening = ref(false);
+const audioRef = ref(null);
 
 const startListening = async () => {
     if (listening.value) return;
-
-    // Crear AudioContext y forzar resume
-    audioContext = new AudioContext();
-    await audioContext.resume();
 
     ws = new WebSocket("wss://prueba-radio.onrender.com/ws/streaming/");
     ws.binaryType = "arraybuffer";
@@ -30,44 +25,14 @@ const startListening = async () => {
     };
 
     ws.onmessage = (event) => {
-        if (event.data.byteLength > 0) {
-            audioQueue.push(event.data);
-            if (!isPlaying) playQueue();
-        }
+        const blob = new Blob([event.data], { type: 'audio/webm; codecs=opus' });
+        const url = URL.createObjectURL(blob);
+
+        // Reproducir audio directamente
+        const audio = audioRef.value;
+        audio.src = url;
+        audio.play().catch(err => console.warn("Error al reproducir:", err));
     };
-};
-
-const playQueue = () => {
-    if (audioQueue.length === 0) {
-        isPlaying = false;
-        return;
-    }
-
-    isPlaying = true;
-
-    const buffer = audioQueue.shift();
-    const int16 = new Int16Array(buffer);
-    const float32 = new Float32Array(int16.length);
-
-    // Convertir int16 -> float32
-    for (let i = 0; i < int16.length; i++) {
-        float32[i] = int16[i] < 0 ? int16[i] / 0x8000 : int16[i] / 0x7fff;
-    }
-
-    // Crear AudioBuffer
-    const audioBuffer = audioContext.createBuffer(
-        1,
-        float32.length,
-        audioContext.sampleRate
-    );
-    audioBuffer.getChannelData(0).set(float32);
-
-    const source = audioContext.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(audioContext.destination);
-    source.start();
-
-    source.onended = () => playQueue();
 };
 </script>
 
