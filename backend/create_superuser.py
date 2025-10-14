@@ -2,15 +2,19 @@ import os
 import django
 from django.contrib.auth import get_user_model
 
-# Indicar la configuración de Django
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")  # tu carpeta de settings.py se llama 'backend'
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 django.setup()
 
 User = get_user_model()
 
-# Cambia los datos del superusuario según necesites
-if not User.objects.filter(username="admin").exists():
-    User.objects.create_superuser("admin", "admin@example.com", "1")
+USERNAME = "admin"
+EMAIL = "admin@example.com"
+PASSWORD = "admin"
+
+if not User.objects.filter(username=USERNAME).exists():
+    User.objects.create_superuser(USERNAME, EMAIL, PASSWORD)
     print("Superuser creado")
 else:
     print("Superuser ya existe")
+
+# python manage.py createsuperuser
