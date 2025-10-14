@@ -10,21 +10,16 @@
           </div>
           <div class="player-title">Nuestra Programación</div>
         </div>
-        
+
         <!-- Sección de transmisión en vivo -->
         <div class="live-stream-section">
           <div class="stream-controls">
             <!-- Botón azul para iniciar (solo se muestra cuando no está streaming) -->
-            <button 
-              v-if="!isLiveStreaming" 
-              @click="startLiveStream" 
-              :disabled="isConnecting" 
-              class="live-btn"
-            >
+            <button v-if="!isLiveStreaming" @click="startLiveStream" :disabled="isConnecting" class="live-btn">
               <span class="btn-icon">🔵</span>
               <span class="btn-text">{{ getButtonText }}</span>
             </button>
-            
+
             <!-- Indicador de streaming cuando está activo -->
             <div v-if="isLiveStreaming" class="live-indicator-display">
               <div class="live-badge-stream">
@@ -38,7 +33,7 @@
               <div class="streaming-icon">📡</div>
             </div>
           </div>
-          
+
           <!-- Estado de la conexión -->
           <div v-if="streamStatus" class="stream-status" :class="statusClass">
             {{ streamStatus }}
@@ -54,16 +49,11 @@
             <h3 class="news-title">Noticias Importantes</h3>
           </div>
           <div class="news-indicators">
-            <span 
-              v-for="(news, index) in newsItems" 
-              :key="index"
-              class="indicator"
-              :class="{ active: currentNewsIndex === index }"
-              @click="setCurrentNews(index)"
-            ></span>
+            <span v-for="(news, index) in newsItems" :key="index" class="indicator"
+              :class="{ active: currentNewsIndex === index }" @click="setCurrentNews(index)"></span>
           </div>
         </div>
-        
+
         <div class="news-content">
           <transition :name="transitionDirection" mode="out-in">
             <div class="news-item" :key="currentNewsIndex" v-if="currentNews">
@@ -77,7 +67,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Sección de Programación -->
     <div class="channel-section">
       <div class="section-header">
@@ -86,26 +76,18 @@
           <h2 class="section-title">Programación Diaria</h2>
         </div>
       </div>
-      
+
       <div class="carousel-container">
         <div class="carousel-nav left" @click="scrollLeft">
           <i class="fas fa-chevron-left"></i>
         </div>
-        
+
         <div class="shows-container" ref="programmingCarousel">
           <!-- Programas Dinámicos desde BD -->
-          <div 
-            v-for="programa in programas" 
-            :key="programa.id" 
-            class="show-card"
-          >
+          <div v-for="programa in programas" :key="programa.id" class="show-card">
             <div class="show-image-container">
-              <img 
-                :src="programa.imagen_url || '/default-program.jpg'" 
-                :alt="programa.nombre" 
-                class="show-image"
-                @error="handleImageError"
-              >
+              <img :src="programa.imagen_url || '/default-program.jpg'" :alt="programa.nombre" class="show-image"
+                @error="handleImageError">
               <div class="show-overlay"></div>
             </div>
             <div class="show-content">
@@ -120,7 +102,7 @@
             </div>
           </div>
         </div>
-        
+
         <div class="carousel-nav right" @click="scrollRight">
           <i class="fas fa-chevron-right"></i>
         </div>
@@ -150,26 +132,26 @@ const transitionDirection = ref('slide-next')
 
 // Variables para programas desde BD
 const programas = ref([])
-const API_BASE_URL = 'http://localhost:8000/api4'
+const API_BASE_URL = 'https://prueba-radio.onrender.com/api4'
 
 // Función para formatear hora de 24h a 12h (AM/PM)
 const formatTime = (timeString) => {
   if (!timeString) return ''
-  
+
   // Si ya está en formato AM/PM, retornar tal cual
   if (timeString.includes('AM') || timeString.includes('PM')) {
     return timeString
   }
-  
+
   // Convertir de formato 24h a 12h
   const [hours, minutes] = timeString.split(':')
   let hour = parseInt(hours)
   const ampm = hour >= 12 ? 'PM' : 'AM'
-  
+
   // Convertir a formato 12h
   hour = hour % 12
   hour = hour === 0 ? 12 : hour // 0 se convierte en 12
-  
+
   return `${hour}:${minutes} ${ampm}`
 }
 
@@ -257,12 +239,12 @@ onMounted(async () => {
   // CARGAR DATOS AL INICIAR
   await fetchProgramas()
   await fetchNews()
-  
+
   // Iniciar rotación solo si hay noticias
   if (newsItems.value.length > 0) {
     newsInterval = setInterval(nextNews, 5000) // Cambia cada 5 segundos
   }
-  
+
   // Recargar datos cada 30 segundos
   setInterval(async () => {
     await fetchProgramas()
@@ -293,11 +275,11 @@ const statusClass = computed(() => {
 // Funciones para transmisión en vivo
 const startLiveStream = () => {
   if (isLiveStreaming.value || isConnecting.value) return;
-  
+
   isConnecting.value = true;
   isLiveStreaming.value = true;
   streamStatus.value = 'Conectando...';
-  
+
   connectWebSocket();
 }
 
@@ -324,7 +306,7 @@ const connectWebSocket = () => {
     ws.onclose = (event) => {
       console.log('WebSocket cerrado');
       isConnecting.value = false;
-      
+
       if (event.code !== 1000) {
         streamStatus.value = 'Conexión perdida - Reconectando...';
         setTimeout(() => {
@@ -341,7 +323,7 @@ const connectWebSocket = () => {
       console.error('WebSocket error:', error);
       streamStatus.value = 'Error de conexión - Reconectando...';
       isConnecting.value = false;
-      
+
       setTimeout(() => {
         if (isLiveStreaming.value) {
           startLiveStream();
@@ -353,7 +335,7 @@ const connectWebSocket = () => {
     console.error('Error conectando WebSocket:', error);
     streamStatus.value = 'Error de conexión - Reconectando...';
     isConnecting.value = false;
-    
+
     setTimeout(() => {
       if (isLiveStreaming.value) {
         startLiveStream();
@@ -380,7 +362,7 @@ const processRawAudio = (rawData) => {
   try {
     const int16Data = new Int16Array(rawData);
     const float32Data = new Float32Array(int16Data.length);
-    
+
     for (let i = 0; i < int16Data.length; i++) {
       float32Data[i] = int16Data[i] / (int16Data[i] < 0 ? 0x8000 : 0x7FFF);
     }
@@ -391,12 +373,12 @@ const processRawAudio = (rawData) => {
 
     const now = audioContext.currentTime;
     const playTime = Math.max(lastPlayTime, now);
-    
+
     const source = audioContext.createBufferSource();
     source.buffer = audioBuffer;
     source.connect(audioContext.destination);
     source.start(playTime);
-    
+
     lastPlayTime = playTime + audioBuffer.duration;
 
     if (!isPlayingAudio) {
@@ -415,15 +397,15 @@ const processRawAudio = (rawData) => {
 
 const smoothAudio = (input) => {
   const output = new Float32Array(input.length);
-  
+
   for (let i = 0; i < input.length; i++) {
     if (i === 0 || i === input.length - 1) {
       output[i] = input[i];
     } else {
-      output[i] = (input[i-1] + input[i] + input[i+1]) / 3;
+      output[i] = (input[i - 1] + input[i] + input[i + 1]) / 3;
     }
   }
-  
+
   return output;
 };
 
@@ -475,18 +457,19 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.98);
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 
+  box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.15),
     0 8px 20px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
-  height: 172px; /* Altura total exacta del reproductor */
+  height: 172px;
+  /* Altura total exacta del reproductor */
 }
 
 .player-container:hover {
   transform: translateY(-5px);
-  box-shadow: 
+  box-shadow:
     0 25px 50px rgba(0, 0, 0, 0.2),
     0 10px 25px rgba(0, 0, 0, 0.15);
 }
@@ -501,7 +484,8 @@ onUnmounted(() => {
   position: relative;
   overflow: hidden;
   border-bottom: 2px solid rgba(0, 157, 219, 0.2);
-  height: 62px; /* Altura fija del header */
+  height: 62px;
+  /* Altura fija del header */
   box-sizing: border-box;
 }
 
@@ -617,10 +601,12 @@ onUnmounted(() => {
     transform: scale(0.95);
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
   }
+
   70% {
     transform: scale(1);
     box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
   }
+
   100% {
     transform: scale(0.95);
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
@@ -660,12 +646,19 @@ onUnmounted(() => {
 }
 
 @keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
+
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
     transform: translateY(0);
   }
+
   40% {
     transform: translateY(-4px);
   }
+
   60% {
     transform: translateY(-2px);
   }
@@ -705,13 +698,14 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.98);
   border-radius: 20px;
   padding: 0;
-  box-shadow: 
+  box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.15),
     0 8px 20px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
-  height: 172px; /* MISMA ALTURA EXACTA QUE EL REPRODUCTOR */
+  height: 172px;
+  /* MISMA ALTURA EXACTA QUE EL REPRODUCTOR */
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -719,7 +713,7 @@ onUnmounted(() => {
 
 .news-panel:hover {
   transform: translateY(-5px);
-  box-shadow: 
+  box-shadow:
     0 25px 50px rgba(0, 0, 0, 0.2),
     0 10px 25px rgba(0, 0, 0, 0.15);
 }
@@ -732,7 +726,8 @@ onUnmounted(() => {
   background: linear-gradient(135deg, #009DDB 0%, #007DB8 100%);
   color: white;
   border-bottom: 2px solid rgba(255, 255, 255, 0.2);
-  height: 62px; /* MISMA ALTURA QUE EL HEADER DEL REPRODUCTOR */
+  height: 62px;
+  /* MISMA ALTURA QUE EL HEADER DEL REPRODUCTOR */
   box-sizing: border-box;
   flex-shrink: 0;
 }
@@ -786,7 +781,8 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  height: 110px; /* MISMA ALTURA QUE EL IFRAME DEL REPRODUCTOR */
+  height: 110px;
+  /* MISMA ALTURA QUE EL IFRAME DEL REPRODUCTOR */
   box-sizing: border-box;
 }
 
@@ -866,7 +862,7 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.95);
   padding: 30px;
   border-radius: 20px;
-  box-shadow: 
+  box-shadow:
     0 15px 35px rgba(0, 0, 0, 0.1),
     0 5px 15px rgba(0, 0, 0, 0.07);
   border: 1px solid rgba(255, 255, 255, 0.8);
@@ -939,7 +935,7 @@ onUnmounted(() => {
   cursor: pointer;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 50%;
-  box-shadow: 
+  box-shadow:
     0 10px 25px rgba(0, 0, 0, 0.15),
     0 4px 10px rgba(0, 0, 0, 0.1);
   border: 2px solid rgba(255, 255, 255, 0.8);
@@ -998,7 +994,7 @@ onUnmounted(() => {
   position: relative;
   border: 1px solid rgba(255, 255, 255, 0.8);
   cursor: pointer;
-  box-shadow: 
+  box-shadow:
     0 10px 25px rgba(0, 0, 0, 0.08),
     0 4px 8px rgba(0, 0, 0, 0.06);
   backdrop-filter: blur(10px);
@@ -1006,7 +1002,7 @@ onUnmounted(() => {
 
 .show-card:hover {
   transform: translateY(-10px) scale(1.02);
-  box-shadow: 
+  box-shadow:
     0 25px 50px rgba(0, 0, 0, 0.15),
     0 12px 25px rgba(0, 0, 0, 0.1);
   border-color: var(--primary);
@@ -1084,7 +1080,8 @@ onUnmounted(() => {
   height: 42px;
 }
 
-.time-slot, .show-host {
+.time-slot,
+.show-host {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1094,7 +1091,8 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
-.time-slot i, .show-host i {
+.time-slot i,
+.show-host i {
   color: var(--primary);
   font-size: 16px;
   width: 18px;
@@ -1107,19 +1105,19 @@ onUnmounted(() => {
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  
+
   .news-panel {
     max-width: 100%;
   }
-  
+
   .main-content {
     padding: 110px 25px 15px 25px;
   }
-  
+
   .show-card {
     flex: 0 0 260px;
   }
-  
+
   .carousel-nav {
     display: none;
   }
@@ -1134,64 +1132,64 @@ onUnmounted(() => {
     padding: 15px 20px;
     gap: 10px;
   }
-  
+
   .stream-controls {
     flex-direction: column;
     gap: 15px;
   }
-  
+
   .live-indicator-display {
     padding: 10px 15px;
     gap: 12px;
   }
-  
+
   .streaming-title {
     font-size: 14px;
   }
-  
+
   .streaming-desc {
     font-size: 12px;
   }
-  
+
   .streaming-icon {
     font-size: 20px;
   }
-  
+
   .player-news-section {
     gap: 15px;
   }
-  
+
   .news-header {
     padding: 15px 20px;
   }
-  
+
   .news-content {
     padding: 15px 20px;
   }
-  
+
   .news-message {
     font-size: 15px;
   }
-  
+
   .show-card {
     flex: 0 0 220px;
   }
-  
+
   .channel-section {
     padding: 25px;
     margin-bottom: 25px;
   }
-  
+
   .section-title {
     font-size: 24px;
   }
-  
+
   .section-title-container i {
     width: 45px;
     height: 45px;
     font-size: 20px;
   }
-  
+
   .player-header {
     flex-direction: column;
     gap: 12px;
@@ -1204,60 +1202,60 @@ onUnmounted(() => {
   .main-content {
     padding: 90px 15px 5px 15px;
   }
-  
+
   .news-header {
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
   }
-  
+
   .news-indicators {
     align-self: flex-end;
   }
-  
+
   .show-card {
     flex: 0 0 200px;
   }
-  
+
   .section-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 18px;
   }
-  
+
   .channel-section {
     padding: 20px;
     margin-bottom: 20px;
   }
-  
+
   .section-title-container {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .section-title-container i {
     align-self: flex-start;
   }
-  
+
   .live-btn {
     padding: 8px 16px;
     font-size: 12px;
   }
-  
+
   .live-indicator-display {
     padding: 8px 12px;
     gap: 10px;
   }
-  
+
   .streaming-title {
     font-size: 13px;
   }
-  
+
   .streaming-desc {
     font-size: 11px;
   }
-  
+
   .streaming-icon {
     font-size: 18px;
   }

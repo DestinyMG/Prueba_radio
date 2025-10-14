@@ -1,60 +1,43 @@
 <template>
-  <div class="global-background">
-    <div class="home">
-      <!-- Audio para el aviso (oculto) -->
-      <audio v-if="avisoAudio && avisoAudio.activo && avisoAudio.audio_file" 
-             :src="avisoAudio.audio_file" 
-             ref="audioPlayer"
-             @ended="handleAudioEnded"
-             @canplaythrough="handleCanPlay"
-             @loadedmetadata="handleLoadedMetadata"
-             @play="handleAudioPlay"
-             @pause="handleAudioPause">
-      </audio>
+    <div class="global-background">
+        <div class="home">
+            <!-- Audio para el aviso (oculto) -->
+            <audio v-if="avisoAudio && avisoAudio.activo && avisoAudio.audio_file" :src="avisoAudio.audio_file"
+                ref="audioPlayer" @ended="handleAudioEnded" @canplaythrough="handleCanPlay"
+                @loadedmetadata="handleLoadedMetadata" @play="handleAudioPlay" @pause="handleAudioPause">
+            </audio>
 
-      <LoadingScreen v-if="isLoading" />
-      
-      <div v-if="!isLoading" class="app-container">
-        <div class="main-content">
-          <!-- 🔹 PRIORIDAD 1: Streaming en vivo (controlado por backend) -->
-          <template v-if="streamingStatus">
-            <StreamingHeader />
-            <StreamingMainContent 
-              :sections="sections" 
-              :current-track="currentTrack"
-              :is-playing="isPlaying"
-              @play-track="handlePlayTrack"
-            />
-            <StreamingFooter @toggle-streaming="toggleStreaming" />
-          </template>
-          
-          <!-- 🔹 PRIORIDAD 2: Mensaje importante -->
-          <template v-else-if="useMensajeInterface && avisoAudio && avisoAudio.activo">
-            <MensajeHeader />
-            <MensajeMainContent 
-              :sections="sections" 
-              :current-track="currentTrack"
-              :is-playing="isPlaying"
-              @play-track="handlePlayTrack"
-            />
-            <MensajeFooter />
-          </template>
-          
-          <!-- 🔹 PRIORIDAD 3: Vista normal de usuario -->
-          <template v-else>
-            <Header @toggle-streaming="toggleStreaming" />
-            <MainContent 
-              :sections="sections" 
-              :current-track="currentTrack"
-              :is-playing="isPlaying"
-              @play-track="handlePlayTrack"
-            />
-            <UsuarioFooter @toggle-streaming="toggleStreaming" />
-          </template>
+            <LoadingScreen v-if="isLoading" />
+
+            <div v-if="!isLoading" class="app-container">
+                <div class="main-content">
+                    <!-- 🔹 PRIORIDAD 1: Streaming en vivo (controlado por backend) -->
+                    <template v-if="streamingStatus">
+                        <StreamingHeader />
+                        <StreamingMainContent :sections="sections" :current-track="currentTrack" :is-playing="isPlaying"
+                            @play-track="handlePlayTrack" />
+                        <StreamingFooter @toggle-streaming="toggleStreaming" />
+                    </template>
+
+                    <!-- 🔹 PRIORIDAD 2: Mensaje importante -->
+                    <template v-else-if="useMensajeInterface && avisoAudio && avisoAudio.activo">
+                        <MensajeHeader />
+                        <MensajeMainContent :sections="sections" :current-track="currentTrack" :is-playing="isPlaying"
+                            @play-track="handlePlayTrack" />
+                        <MensajeFooter />
+                    </template>
+
+                    <!-- 🔹 PRIORIDAD 3: Vista normal de usuario -->
+                    <template v-else>
+                        <Header @toggle-streaming="toggleStreaming" />
+                        <MainContent :sections="sections" :current-track="currentTrack" :is-playing="isPlaying"
+                            @play-track="handlePlayTrack" />
+                        <UsuarioFooter @toggle-streaming="toggleStreaming" />
+                    </template>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </template>
 
 <script setup>
@@ -104,13 +87,13 @@ const sections = ref([])
 // 🔹 NUEVA: Función para verificar estado de streaming desde backend
 const checkStreamingStatus = async () => {
     try {
-        const response = await axios.get('http://localhost:8000/api3/')
+        const response = await axios.get('https://prueba-radio.onrender.com/api3/')
         const newStatus = response.data.activate  // ← CAMBIADO de "is_active" a "activate"
-        
+
         if (newStatus !== streamingStatus.value) {
             streamingStatus.value = newStatus
             console.log(`📡 Estado de streaming actualizado: ${newStatus}`)
-            
+
             // Si el backend dice que hay streaming, conectar WebSocket automáticamente
             if (newStatus && !isStreamingActive.value) {
                 connectWebSocket()
@@ -176,7 +159,7 @@ const connectWebSocket = () => {
         ws.onclose = (event) => {
             console.log('WebSocket cerrado')
             isStreamingActive.value = false
-            
+
             if (event.code !== 1000) {
                 // Reconectar después de 3 segundos si no fue una desconexión intencional
                 setTimeout(() => {
@@ -215,7 +198,7 @@ const processRawAudio = (rawData) => {
         // Convertir Int16 back to Float32
         const int16Data = new Int16Array(rawData)
         const float32Data = new Float32Array(int16Data.length)
-        
+
         for (let i = 0; i < int16Data.length; i++) {
             float32Data[i] = int16Data[i] / (int16Data[i] < 0 ? 0x8000 : 0x7FFF)
         }
@@ -230,13 +213,13 @@ const processRawAudio = (rawData) => {
         // Controlar timing para evitar solapamiento
         const now = audioContext.currentTime
         const playTime = Math.max(lastPlayTime, now)
-        
+
         // Crear fuente y reproducir
         const source = audioContext.createBufferSource()
         source.buffer = audioBuffer
         source.connect(audioContext.destination)
         source.start(playTime)
-        
+
         lastPlayTime = playTime + audioBuffer.duration
 
         if (!isPlayingAudio) {
@@ -252,17 +235,17 @@ const processRawAudio = (rawData) => {
 // Filtro de suavizado para mejor calidad
 const smoothAudio = (input) => {
     const output = new Float32Array(input.length)
-    
+
     // Filtro simple para reducir ruido
     for (let i = 0; i < input.length; i++) {
         if (i === 0 || i === input.length - 1) {
             output[i] = input[i]
         } else {
             // Promedio suavizado
-            output[i] = (input[i-1] + input[i] + input[i+1]) / 3
+            output[i] = (input[i - 1] + input[i] + input[i + 1]) / 3
         }
     }
-    
+
     return output
 }
 
@@ -271,12 +254,12 @@ const stopStreaming = () => {
     isStreamingActive.value = false
     isPlayingAudio = false
     lastPlayTime = 0
-    
+
     if (ws) {
         ws.close(1000, "Usuario detuvo")
         ws = null
     }
-    
+
     if (audioContext) {
         audioContext.close()
         audioContext = null
@@ -287,7 +270,7 @@ const stopStreaming = () => {
 watch(avisoAudio, (newAviso, oldAviso) => {
     if (newAviso?.activo && newAviso?.audio_file) {
         useMensajeInterface.value = true
-        
+
         nextTick(() => {
             setTimeout(() => {
                 attemptAudioPlayback()
@@ -318,10 +301,10 @@ watch(streamingStatus, (newVal) => {
 // Intentar reproducir el audio
 const attemptAudioPlayback = async () => {
     if (!audioPlayer.value || !avisoAudio.value?.activo || streamingStatus.value) return
-    
+
     try {
         audioPlayer.value.load()
-        
+
         await new Promise((resolve) => {
             if (audioPlayer.value.readyState >= 3) {
                 resolve()
@@ -329,10 +312,10 @@ const attemptAudioPlayback = async () => {
                 audioPlayer.value.addEventListener('canplaythrough', resolve, { once: true })
             }
         })
-        
+
         await audioPlayer.value.play()
         isPlaying.value = true
-        
+
     } catch (error) {
         // Autoplay bloqueado, se reproducirá con interacción del usuario
     }
@@ -342,16 +325,16 @@ const attemptAudioPlayback = async () => {
 const setupUserInteraction = () => {
     const handleFirstInteraction = () => {
         userInteracted.value = true
-        
+
         if (avisoAudio.value?.activo && audioPlayer.value && !isPlaying.value && !streamingStatus.value) {
             attemptAudioPlayback()
         }
-        
+
         document.removeEventListener('click', handleFirstInteraction)
         document.removeEventListener('touchstart', handleFirstInteraction)
         document.removeEventListener('keydown', handleFirstInteraction)
     }
-    
+
     document.addEventListener('click', handleFirstInteraction, { once: true })
     document.addEventListener('touchstart', handleFirstInteraction, { once: true })
     document.addEventListener('keydown', handleFirstInteraction, { once: true })
@@ -389,7 +372,7 @@ const clearPolling = () => {
 
 const setupPolling = () => {
     clearPolling()
-    
+
     const intervalTime = avisoAudio.value?.activo ? 2000 : 5000
     pollingInterval = setInterval(checkAvisoStatus, intervalTime)
 }
@@ -408,9 +391,9 @@ const clearStreamingPolling = () => {
 
 const checkAvisoStatus = async () => {
     try {
-        const response = await axios.get('http://localhost:8000/api2/aviso/2/')
+        const response = await axios.get('https://prueba-radio.onrender.com/api2/aviso/2/')
         const avisoData = response.data
-        
+
         const currentState = JSON.stringify(avisoData)
         if (currentState !== lastAvisoState.value) {
             lastAvisoState.value = currentState
@@ -432,7 +415,7 @@ onMounted(async () => {
     await checkStreamingStatus() // 🔹 Verificar estado al cargar
     setupPolling()
     setupStreamingPolling() // 🔹 Iniciar polling de streaming
-    
+
     setTimeout(() => {
         isLoading.value = false
     }, 3000)
@@ -448,112 +431,113 @@ onUnmounted(() => {
 <style scoped>
 /* Tus estilos existentes se mantienen igual */
 .global-background {
-  background: linear-gradient(135deg, #009DDB 0%, #007DB8 50%, #005A87 100%);
-  color: var(--text-primary);
-  display: flex;
-  min-height: 100vh;
-  overflow-x: hidden;
-  position: relative;
-  width: 100%;
+    background: linear-gradient(135deg, #009DDB 0%, #007DB8 50%, #005A87 100%);
+    color: var(--text-primary);
+    display: flex;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    width: 100%;
 }
 
 .global-background::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    radial-gradient(circle at 10% 20%, rgba(255,255,255,0.4) 0%, transparent 20%),
-    radial-gradient(circle at 90% 80%, rgba(255,255,255,0.4) 0%, transparent 20%),
-    radial-gradient(circle at 30% 60%, rgba(255,255,255,0.3) 0%, transparent 25%),
-    radial-gradient(circle at 70% 30%, rgba(255,255,255,0.3) 0%, transparent 25%);
-  background-size: 200% 200%;
-  background-position: 0% 0%;
-  z-index: -1;
-  opacity: 0.9;
-  animation: waveAnimation 15s infinite alternate;
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.4) 0%, transparent 20%),
+        radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.4) 0%, transparent 20%),
+        radial-gradient(circle at 30% 60%, rgba(255, 255, 255, 0.3) 0%, transparent 25%),
+        radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.3) 0%, transparent 25%);
+    background-size: 200% 200%;
+    background-position: 0% 0%;
+    z-index: -1;
+    opacity: 0.9;
+    animation: waveAnimation 15s infinite alternate;
 }
 
 @keyframes waveAnimation {
-  0% {
-    background-position: 0% 0%;
-  }
-  100% {
-    background-position: 100% 100%;
-  }
+    0% {
+        background-position: 0% 0%;
+    }
+
+    100% {
+        background-position: 100% 100%;
+    }
 }
 
 :root {
-  --primary: #009DDB;
-  --primary-dark: #007DB8;
-  --light-bg: #FAFBFD;
-  --dark-bg: #E1F0F7;
-  --sidebar-bg: #FFFFFF;
-  --card-bg: #FFFFFF;
-  --text-primary: #2D3748;
-  --text-secondary: #5F6C7B;
-  --divider: #E2E8F0;
-  --menu-hover: rgba(0, 157, 219, 0.1);
-  --shadow: 0 4px 12px rgba(0, 125, 184, 0.1);
-  --highlight-bg: rgba(0, 157, 219, 0.05);
-  --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    --primary: #009DDB;
+    --primary-dark: #007DB8;
+    --light-bg: #FAFBFD;
+    --dark-bg: #E1F0F7;
+    --sidebar-bg: #FFFFFF;
+    --card-bg: #FFFFFF;
+    --text-primary: #2D3748;
+    --text-secondary: #5F6C7B;
+    --divider: #E2E8F0;
+    --menu-hover: rgba(0, 157, 219, 0.1);
+    --shadow: 0 4px 12px rgba(0, 125, 184, 0.1);
+    --highlight-bg: rgba(0, 157, 219, 0.05);
+    --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-dark));
 }
 
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Circular', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Circular', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .home {
-  width: 100%;
-  min-height: 100vh;
+    width: 100%;
+    min-height: 100vh;
 }
 
 .app-container {
-  position: relative;
-  width: 100%;
-  min-height: 100vh;
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
 }
 
 .main-content {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Asegurar que el footer quede pegado abajo */
-.main-content > *:not(footer) {
-  flex: 1 0 auto;
+.main-content>*:not(footer) {
+    flex: 1 0 auto;
 }
 
-.main-content > footer {
-  flex-shrink: 0;
+.main-content>footer {
+    flex-shrink: 0;
 }
 
 audio {
-  display: none;
+    display: none;
 }
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .main-content {
-    min-height: 100vh;
-  }
+    .main-content {
+        min-height: 100vh;
+    }
 }
 
 @media (max-width: 768px) {
-  .main-content {
-    min-height: 100vh;
-  }
+    .main-content {
+        min-height: 100vh;
+    }
 }
 
 @media (max-width: 480px) {
-  .main-content {
-    min-height: 100vh;
-  }
+    .main-content {
+        min-height: 100vh;
+    }
 }
 </style>

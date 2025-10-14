@@ -100,21 +100,15 @@
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                    
+
                     <div class="form-container">
                         <form @submit.prevent="saveNews">
                             <div class="form-group">
                                 <label for="label">
                                     <i class="fas fa-tag"></i> Label
                                 </label>
-                                <input 
-                                    type="text" 
-                                    id="label" 
-                                    v-model="currentNews.label" 
-                                    placeholder="Ej: DW, BBC, Actualidad..."
-                                    maxlength="10"
-                                    required
-                                >
+                                <input type="text" id="label" v-model="currentNews.label"
+                                    placeholder="Ej: DW, BBC, Actualidad..." maxlength="10" required>
                                 <small>Máximo 10 caracteres</small>
                             </div>
 
@@ -122,26 +116,16 @@
                                 <label for="message">
                                     <i class="fas fa-comment"></i> Mensaje de la Noticia
                                 </label>
-                                <textarea 
-                                    id="message" 
-                                    v-model="currentNews.message" 
-                                    placeholder="Ingresa el contenido de la noticia..."
-                                    rows="4"
-                                    required
-                                ></textarea>
+                                <textarea id="message" v-model="currentNews.message"
+                                    placeholder="Ingresa el contenido de la noticia..." rows="4" required></textarea>
                             </div>
 
                             <div class="form-group">
                                 <label for="url">
                                     <i class="fas fa-link"></i> URL de la Noticia
                                 </label>
-                                <input 
-                                    type="url" 
-                                    id="url" 
-                                    v-model="currentNews.url" 
-                                    placeholder="https://ejemplo.com/noticia"
-                                    required
-                                >
+                                <input type="url" id="url" v-model="currentNews.url"
+                                    placeholder="https://ejemplo.com/noticia" required>
                             </div>
 
                             <div class="form-group" v-if="isEditing">
@@ -175,7 +159,7 @@ import { ref, onMounted, computed } from 'vue';
 import BaseAdmin from './BaseAdmin.vue';
 
 // Constante base para la API - ÚSALA EN TODAS LAS FUNCIONES
-const API_BASE_URL = 'http://localhost:8000/api4';
+const API_BASE_URL = 'https://prueba-radio.onrender.com/api4';
 
 // Variables reactivas
 const newsItems = ref([]);
@@ -345,13 +329,13 @@ const toggleNewsStatus = async (news) => {
 
 const saveNews = async () => {
     saving.value = true;
-    
+
     try {
         // Validación adicional
         if (!currentNews.value.label?.trim()) {
             throw new Error('El campo Label es requerido');
         }
-        
+
         if (isEditing.value) {
             await updateNews(currentNews.value.id, currentNews.value);
             statusMessage.value = 'Noticia actualizada correctamente';
@@ -359,7 +343,7 @@ const saveNews = async () => {
             await createNews(currentNews.value);
             statusMessage.value = 'Noticia creada correctamente';
         }
-        
+
         await fetchNews();
         closeModal();
     } catch (error) {
@@ -475,7 +459,7 @@ onMounted(() => {
     background: white;
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     gap: 15px;
@@ -518,14 +502,14 @@ onMounted(() => {
 .news-card {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     transition: all 0.3s ease;
 }
 
 .news-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .card-main-content {
@@ -584,7 +568,9 @@ onMounted(() => {
     line-height: 1.4;
 }
 
-.card-url, .card-date, .card-status {
+.card-url,
+.card-date,
+.card-status {
     margin: 0 0 8px 0;
     color: #6c757d;
     font-size: 14px;
@@ -707,7 +693,7 @@ onMounted(() => {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -722,7 +708,7 @@ onMounted(() => {
     max-width: 500px;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .modal-header {
@@ -829,7 +815,8 @@ onMounted(() => {
     margin-top: 30px;
 }
 
-.cancel-button, .save-button {
+.cancel-button,
+.save-button {
     padding: 10px 20px;
     border: none;
     border-radius: 6px;
@@ -868,31 +855,31 @@ onMounted(() => {
     .admin-container {
         padding: 15px;
     }
-    
+
     .page-header {
         flex-direction: column;
         gap: 15px;
         align-items: flex-start;
     }
-    
+
     .header-actions {
         width: 100%;
     }
-    
+
     .news-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .card-footer {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .card-actions {
         justify-content: center;
         margin-bottom: 10px;
     }
-    
+
     .form-actions {
         flex-direction: column;
     }

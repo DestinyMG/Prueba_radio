@@ -14,15 +14,8 @@
           <label for="username">Usuario</label>
           <div class="input-container">
             <i class="fas fa-user input-icon"></i>
-            <input 
-              v-model="username" 
-              type="text" 
-              id="username" 
-              maxlength="15" 
-              required 
-              @input="filterUsername"
-              placeholder="Ingresa tu usuario"
-            />
+            <input v-model="username" type="text" id="username" maxlength="15" required @input="filterUsername"
+              placeholder="Ingresa tu usuario" />
           </div>
         </div>
 
@@ -30,20 +23,9 @@
           <label for="password">Contraseña</label>
           <div class="input-container">
             <i class="fas fa-lock input-icon"></i>
-            <input 
-              v-model="password" 
-              :type="showPassword ? 'text' : 'password'" 
-              id="password" 
-              maxlength="12" 
-              required
-              @input="filterPassword"
-              placeholder="Ingresa tu contraseña"
-            />
-            <button 
-              type="button" 
-              class="password-toggle"
-              @click="showPassword = !showPassword"
-            >
+            <input v-model="password" :type="showPassword ? 'text' : 'password'" id="password" maxlength="12" required
+              @input="filterPassword" placeholder="Ingresa tu contraseña" />
+            <button type="button" class="password-toggle" @click="showPassword = !showPassword">
               <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </button>
           </div>
@@ -98,7 +80,7 @@ const handleLogin = async () => {
   errorMessage.value = '';
 
   try {
-    const response = await axios.post('http://localhost:8000/api/login/token/', {
+    const response = await axios.post('https://prueba-radio.onrender.com/api/login/token/', {
       username: username.value,
       password: password.value
     });
@@ -143,6 +125,7 @@ const handleLogin = async () => {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -280,12 +263,12 @@ input:focus {
   transition: all 0.3s ease;
 }
 
-.remember-me input:checked + .checkmark {
+.remember-me input:checked+.checkmark {
   background: #1466e1;
   border-color: #1466e1;
 }
 
-.remember-me input:checked + .checkmark::after {
+.remember-me input:checked+.checkmark::after {
   content: '✓';
   position: absolute;
   color: white;
@@ -342,8 +325,13 @@ input:focus {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error-message {

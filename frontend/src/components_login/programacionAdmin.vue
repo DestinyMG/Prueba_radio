@@ -42,12 +42,8 @@
             <div v-if="programas.length > 0" class="programs-grid">
                 <div v-for="programa in programas" :key="programa.id" class="program-card">
                     <div class="card-image-container">
-                        <img 
-                            :src="programa.imagen_url || '/default-program.jpg'" 
-                            :alt="programa.nombre" 
-                            class="program-image"
-                            @error="handleImageError"
-                        >
+                        <img :src="programa.imagen_url || '/default-program.jpg'" :alt="programa.nombre"
+                            class="program-image" @error="handleImageError">
                         <div class="image-overlay"></div>
                         <div class="program-badge">{{ programa.label }}</div>
                     </div>
@@ -56,9 +52,10 @@
                             <h3 class="card-title">{{ programa.nombre }}</h3>
                             <p class="card-description">{{ programa.descripcion }}</p>
                             <div class="program-details">
-                               <div class="time-slot">
+                                <div class="time-slot">
                                     <i class="far fa-clock"></i>
-                                    {{ formatTimeForDisplay(programa.hora_inicio) }} - {{ formatTimeForDisplay(programa.hora_fin) }}
+                                    {{ formatTimeForDisplay(programa.hora_inicio) }} - {{
+                                    formatTimeForDisplay(programa.hora_fin) }}
                                 </div>
                                 <!-- ELIMINADO: program-host section -->
                             </div>
@@ -105,7 +102,7 @@
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                    
+
                     <div class="modal-body">
                         <form @submit.prevent="savePrograma" class="program-form">
                             <!-- Información Básica -->
@@ -118,26 +115,16 @@
                                         <label for="nombre">
                                             <i class="fas fa-heading"></i> Nombre del Programa *
                                         </label>
-                                        <input 
-                                            type="text" 
-                                            id="nombre" 
-                                            v-model="currentPrograma.nombre" 
-                                            placeholder="Ej: Música Relajante, Éxitos del Momento..."
-                                            required
-                                        >
+                                        <input type="text" id="nombre" v-model="currentPrograma.nombre"
+                                            placeholder="Ej: Música Relajante, Éxitos del Momento..." required>
                                     </div>
 
                                     <div class="form-group">
                                         <label for="label">
                                             <i class="fas fa-tag"></i> Género/Etiqueta *
                                         </label>
-                                        <input 
-                                            type="text" 
-                                            id="label" 
-                                            v-model="currentPrograma.label" 
-                                            placeholder="Ej: Música, Jazz, Rock, Latina..."
-                                            required
-                                        >
+                                        <input type="text" id="label" v-model="currentPrograma.label"
+                                            placeholder="Ej: Música, Jazz, Rock, Latina..." required>
                                     </div>
                                 </div>
 
@@ -145,13 +132,9 @@
                                     <label for="descripcion">
                                         <i class="fas fa-comment"></i> Descripción del Programa *
                                     </label>
-                                    <textarea 
-                                        id="descripcion" 
-                                        v-model="currentPrograma.descripcion" 
-                                        placeholder="Describe el contenido del programa..."
-                                        rows="3"
-                                        required
-                                    ></textarea>
+                                    <textarea id="descripcion" v-model="currentPrograma.descripcion"
+                                        placeholder="Describe el contenido del programa..." rows="3"
+                                        required></textarea>
                                 </div>
                             </div>
 
@@ -165,24 +148,15 @@
                                         <label for="hora_inicio">
                                             <i class="far fa-clock"></i> Hora de Inicio *
                                         </label>
-                                        <input 
-                                            type="time" 
-                                            id="hora_inicio" 
-                                            v-model="currentPrograma.hora_inicio" 
-                                            required
-                                        >
+                                        <input type="time" id="hora_inicio" v-model="currentPrograma.hora_inicio"
+                                            required>
                                     </div>
 
                                     <div class="form-group">
                                         <label for="hora_fin">
                                             <i class="far fa-clock"></i> Hora de Fin *
                                         </label>
-                                        <input 
-                                            type="time" 
-                                            id="hora_fin" 
-                                            v-model="currentPrograma.hora_fin" 
-                                            required
-                                        >
+                                        <input type="time" id="hora_fin" v-model="currentPrograma.hora_fin" required>
                                     </div>
                                 </div>
                             </div>
@@ -196,16 +170,10 @@
                                     <label for="imagen" class="file-label">
                                         <i class="fas fa-upload"></i> Seleccionar Imagen
                                     </label>
-                                    <input 
-                                        type="file" 
-                                        id="imagen" 
-                                        ref="imagenInput"
-                                        accept="image/*"
-                                        @change="handleImageUpload"
-                                        class="file-input"
-                                    >
+                                    <input type="file" id="imagen" ref="imagenInput" accept="image/*"
+                                        @change="handleImageUpload" class="file-input">
                                     <small class="file-hint">Formatos: JPG, PNG, GIF. Tamaño máximo: 5MB</small>
-                                    
+
                                     <!-- Vista previa -->
                                     <div v-if="imagePreview" class="image-preview">
                                         <p class="preview-label">Vista previa:</p>
@@ -214,11 +182,13 @@
                                             <i class="fas fa-times"></i> Eliminar imagen
                                         </button>
                                     </div>
-                                    
+
                                     <!-- Imagen actual -->
-                                    <div v-if="isEditing && currentPrograma.imagen_url && !imagePreview" class="current-image">
+                                    <div v-if="isEditing && currentPrograma.imagen_url && !imagePreview"
+                                        class="current-image">
                                         <p class="preview-label">Imagen actual:</p>
-                                        <img :src="currentPrograma.imagen_url" alt="Imagen actual" class="preview-image">
+                                        <img :src="currentPrograma.imagen_url" alt="Imagen actual"
+                                            class="preview-image">
                                     </div>
                                 </div>
                             </div>
@@ -261,7 +231,7 @@ import { ref, onMounted, computed } from 'vue';
 import BaseAdmin from './BaseAdmin.vue';
 
 // Constante base para la API
-const API_BASE_URL = 'http://localhost:8000/api4';
+const API_BASE_URL = 'https://prueba-radio.onrender.com/api4';
 
 // Variables reactivas
 const programas = ref([]);
@@ -297,45 +267,45 @@ const todayProgramsCount = computed(() => {
 // Funciones para manejo de horas
 const formatTimeForInput = (timeString) => {
     if (!timeString) return '';
-    
+
     // Si ya está en formato 24h (HH:MM), retornar tal cual
     if (timeString.match(/^\d{2}:\d{2}$/)) {
         return timeString;
     }
-    
+
     // Convertir de formato 12h (AM/PM) a 24h para el input
     const [time, modifier] = timeString.split(' ');
     let [hours, minutes] = time.split(':');
-    
+
     hours = parseInt(hours);
-    
+
     if (modifier === 'PM' && hours < 12) {
         hours += 12;
     }
     if (modifier === 'AM' && hours === 12) {
         hours = 0;
     }
-    
+
     return `${hours.toString().padStart(2, '0')}:${minutes}`;
 };
 
 const formatTimeForDisplay = (timeString) => {
     if (!timeString) return '';
-    
+
     // Si ya está en formato AM/PM, retornar tal cual
     if (timeString.includes('AM') || timeString.includes('PM')) {
         return timeString;
     }
-    
+
     // Convertir de formato 24h a 12h (AM/PM)
     const [hours, minutes] = timeString.split(':');
     let hour = parseInt(hours);
     const ampm = hour >= 12 ? 'PM' : 'AM';
-    
+
     // Convertir a formato 12h
     hour = hour % 12;
     hour = hour === 0 ? 12 : hour; // 0 se convierte en 12
-    
+
     return `${hour}:${minutes} ${ampm}`;
 };
 
@@ -359,7 +329,7 @@ const fetchProgramas = async () => {
 const createPrograma = async (programaData) => {
     try {
         const formData = new FormData();
-        
+
         // Agregar campos al FormData
         Object.keys(programaData).forEach(key => {
             if (key === 'imagen' && programaData[key]) {
@@ -391,7 +361,7 @@ const createPrograma = async (programaData) => {
 const updatePrograma = async (id, programaData) => {
     try {
         const formData = new FormData();
-        
+
         // Agregar campos al FormData
         Object.keys(programaData).forEach(key => {
             if (key === 'imagen' && programaData[key]) {
@@ -454,7 +424,7 @@ const openCreateModal = () => {
 };
 
 const editPrograma = (programa) => {
-    currentPrograma.value = { 
+    currentPrograma.value = {
         ...programa,
         hora_inicio: programa.hora_inicio ? formatTimeForInput(programa.hora_inicio) : '',
         hora_fin: programa.hora_fin ? formatTimeForInput(programa.hora_fin) : '',
@@ -474,16 +444,16 @@ const handleImageUpload = (event) => {
             setTimeout(() => statusMessage.value = '', 3000);
             return;
         }
-        
+
         // Validar tamaño (5MB máximo)
         if (file.size > 5 * 1024 * 1024) {
             statusMessage.value = 'Error: La imagen no puede superar los 5MB';
             setTimeout(() => statusMessage.value = '', 3000);
             return;
         }
-        
+
         currentPrograma.value.imagen = file;
-        
+
         // Crear vista previa
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -507,7 +477,7 @@ const handleImageError = (event) => {
 
 const savePrograma = async () => {
     saving.value = true;
-    
+
     try {
         // Validación
         if (!currentPrograma.value.nombre?.trim()) {
@@ -516,7 +486,7 @@ const savePrograma = async () => {
         if (!currentPrograma.value.label?.trim()) {
             throw new Error('El campo Género/Etiqueta es requerido');
         }
-        
+
         if (isEditing.value) {
             await updatePrograma(currentPrograma.value.id, currentPrograma.value);
             statusMessage.value = 'Programa actualizado correctamente';
@@ -524,7 +494,7 @@ const savePrograma = async () => {
             await createPrograma(currentPrograma.value);
             statusMessage.value = 'Programa creado correctamente';
         }
-        
+
         await fetchProgramas();
         closeModal();
     } catch (error) {
@@ -551,7 +521,7 @@ const closeModal = () => {
         // ELIMINADO: dj_host: '',
         is_active: true
     };
-    
+
     // Limpiar input de archivo
     if (imagenInput.value) {
         imagenInput.value.value = '';
@@ -650,7 +620,7 @@ onMounted(() => {
     background: white;
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     gap: 15px;
@@ -693,7 +663,7 @@ onMounted(() => {
 .program-card {
     background: white;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     transition: all 0.3s ease;
     border: 1px solid #e9ecef;
@@ -701,7 +671,7 @@ onMounted(() => {
 
 .program-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
 }
 
 .card-image-container {
@@ -727,7 +697,7 @@ onMounted(() => {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.1) 100%);
+    background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.1) 100%);
 }
 
 .program-badge {
@@ -775,7 +745,8 @@ onMounted(() => {
     gap: 8px;
 }
 
-.time-slot, .program-host {
+.time-slot,
+.program-host {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -784,7 +755,8 @@ onMounted(() => {
     font-weight: 500;
 }
 
-.time-slot i, .program-host i {
+.time-slot i,
+.program-host i {
     color: #3498db;
     width: 16px;
 }
@@ -873,7 +845,7 @@ onMounted(() => {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0, 0, 0, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -887,7 +859,7 @@ onMounted(() => {
     max-height: 90vh;
     background: white;
     border-radius: 12px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1095,7 +1067,7 @@ onMounted(() => {
     max-width: 100%;
     max-height: 200px;
     border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     margin-bottom: 12px;
 }
 
@@ -1193,49 +1165,49 @@ onMounted(() => {
     .admin-container {
         padding: 15px;
     }
-    
+
     .page-header {
         flex-direction: column;
         gap: 15px;
         align-items: flex-start;
     }
-    
+
     .header-actions {
         width: 100%;
     }
-    
+
     .programs-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .modal-content {
         width: 95%;
         max-height: 95vh;
     }
-    
+
     .program-form {
         padding: 20px;
     }
-    
+
     .form-grid {
         grid-template-columns: 1fr;
         gap: 16px;
     }
-    
+
     .form-grid.triple {
         grid-template-columns: 1fr;
     }
-    
+
     .form-actions {
         flex-direction: column;
     }
-    
+
     .cancel-button,
     .save-button {
         width: 100%;
         min-width: auto;
     }
-    
+
     .modal-header {
         padding: 16px 20px;
     }
@@ -1245,11 +1217,11 @@ onMounted(() => {
     .program-form {
         padding: 16px;
     }
-    
+
     .form-section {
         margin-bottom: 24px;
     }
-    
+
     .section-title {
         font-size: 15px;
         margin-bottom: 16px;
