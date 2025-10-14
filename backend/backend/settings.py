@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from datetime import timedelta
+import dj_database_url
+
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),   # token de acceso dura 15 min
@@ -114,10 +116,15 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Configuración de la base de datos (PostgreSQL de Render)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'database_radio',               # Nombre de tu DB en Render
+        'USER': 'radio_admin',                  # Usuario generado por Render
+        'PASSWORD': '0d7h6jWqsR6qhFb9JOUmGBLd7GXQCjMK',        # La contraseña de Render
+        'HOST': 'dpg-d3naf9euk2gs7385lgig-a', # Host que Render te dio
+        'PORT': '5432',                         # Puerto de PostgreSQL
     }
 }
 
