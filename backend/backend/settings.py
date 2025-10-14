@@ -41,6 +41,8 @@ ALLOWED_HOSTS = [
     "kyeroradio.com",
     "prueba-radio-1.onrender.com",
     "prueba-radio.onrender.com",
+    "127.0.0.1",
+    'localhost',
 ]
  
 
@@ -166,6 +168,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "https://kyeroradio.com",
     "https://prueba-radio-1.onrender.com",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
 
 REST_FRAMEWORK = {
