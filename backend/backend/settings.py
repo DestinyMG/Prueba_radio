@@ -40,7 +40,7 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "kyeroradio.com",
     "prueba-radio-1.onrender.com",
-    
+    "prueba-radio.onrender.com",
 ]
  
 
