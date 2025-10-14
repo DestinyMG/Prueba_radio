@@ -1,52 +1,55 @@
 <template>
-   <div class="global-background">
-  <div class="home">
-    <!-- Audio para el aviso (oculto) -->
-    <audio v-if="avisoAudio && avisoAudio.activo && avisoAudio.audio_file" 
-           :src="avisoAudio.audio_file" 
-           ref="audioPlayer"
-           @ended="handleAudioEnded"
-           @canplaythrough="handleCanPlay"
-           @loadedmetadata="handleLoadedMetadata"
-           @play="handleAudioPlay"
-           @pause="handleAudioPause">
-    </audio>
+  <div class="global-background">
+    <div class="home">
+      <!-- Audio para el aviso (oculto) -->
+      <audio v-if="avisoAudio && avisoAudio.activo && avisoAudio.audio_file" 
+             :src="avisoAudio.audio_file" 
+             ref="audioPlayer"
+             @ended="handleAudioEnded"
+             @canplaythrough="handleCanPlay"
+             @loadedmetadata="handleLoadedMetadata"
+             @play="handleAudioPlay"
+             @pause="handleAudioPause">
+      </audio>
 
-    <LoadingScreen v-if="isLoading" />
-    
-    <div v-if="!isLoading" class="app-container">
-      <div class="main-content">
-        <template v-if="useMensajeInterface && avisoAudio && avisoAudio.activo">
-          <MensajeHeader />
-          <MensajeSidebar :active-menu="activeMenu" @set-active-menu="setActiveMenu" />
-          <MensajeMainContent 
-            :sections="sections" 
-            :current-track="currentTrack"
-            :is-playing="isPlaying"
-            @play-track="handlePlayTrack"
-          />
-          <MensajePlayer 
-            :current-track="currentTrack"
-            :is-playing="isPlaying"
-            :aviso-audio="avisoAudio"
-            @play-pause="togglePlay"
-          />
-        </template>
-        <template v-else>
-          <Header />
-          <Sidebar :active-menu="activeMenu" @set-active-menu="setActiveMenu" />
-          <MainContent 
-            :sections="sections" 
-            :current-track="currentTrack"
-            :is-playing="isPlaying"
-            @play-track="handlePlayTrack"
-          />
-          <Player 
-            :current-track="currentTrack"
-            :is-playing="isPlaying"
-            :aviso-audio="avisoAudio"
-            @play-pause="togglePlay"
-          />
+      <LoadingScreen v-if="isLoading" />
+      
+      <div v-if="!isLoading" class="app-container">
+        <div class="main-content">
+          <!-- 🔹 PRIORIDAD 1: Streaming en vivo (controlado por backend) -->
+          <template v-if="streamingStatus">
+            <StreamingHeader />
+            <StreamingMainContent 
+              :sections="sections" 
+              :current-track="currentTrack"
+              :is-playing="isPlaying"
+              @play-track="handlePlayTrack"
+            />
+            <StreamingFooter @toggle-streaming="toggleStreaming" />
+          </template>
+          
+          <!-- 🔹 PRIORIDAD 2: Mensaje importante -->
+          <template v-else-if="useMensajeInterface && avisoAudio && avisoAudio.activo">
+            <MensajeHeader />
+            <MensajeMainContent 
+              :sections="sections" 
+              :current-track="currentTrack"
+              :is-playing="isPlaying"
+              @play-track="handlePlayTrack"
+            />
+            <MensajeFooter />
+          </template>
+          
+          <!-- 🔹 PRIORIDAD 3: Vista normal de usuario -->
+          <template v-else>
+            <Header @toggle-streaming="toggleStreaming" />
+            <MainContent 
+              :sections="sections" 
+              :current-track="currentTrack"
+              :is-playing="isPlaying"
+              @play-track="handlePlayTrack"
+            />
+            <UsuarioFooter @toggle-streaming="toggleStreaming" />
           </template>
         </div>
       </div>
@@ -62,375 +65,388 @@ import axios from 'axios'
 import LoadingScreen from '../components_usuario/LoadingScreen.vue'
 import Header from '../components_usuario/Header.vue'
 import MainContent from '../components_usuario/MainContent.vue'
+import UsuarioFooter from '../components_usuario/footer.vue'
 
-// Componentes de mensaje (interfaz alternativa)
+// Componentes de mensaje
 import MensajeHeader from '../components_mensaje/Header.vue'
-import MensajeSidebar from '../components_mensaje/Sidebar.vue'
 import MensajeMainContent from '../components_mensaje/MainContent.vue'
-import MensajePlayer from '../components_mensaje/Player.vue'
+import MensajeFooter from '../components_mensaje/footer.vue'
+
+// Componentes de streaming (nuevos)
+import StreamingHeader from '../components_streaming/Header.vue'
+import StreamingMainContent from '../components_streaming/MainContent.vue'
+import StreamingFooter from '../components_streaming/footer.vue'
 
 const isLoading = ref(true)
 const isPlaying = ref(false)
-const activeMenu = ref('inicio')
 const currentTrack = ref(null)
 const useMensajeInterface = ref(false)
 const avisoAudio = ref(null)
-const audioFiles = ref([])
-const currentAudioIndex = ref(0)
 const audioPlayer = ref(null)
-const lastAudioState = ref(null)
+const lastAvisoState = ref(null)
 const userInteracted = ref(false)
-const isInMensajeCycle = ref(false)
-const cycleTimer = ref(null)
-const hasStartedFirstCycle = ref(false) // Control para primer ciclo
+
+// 🔹 NUEVA: Variable para estado de streaming desde backend
+const streamingStatus = ref(false)
+const isStreamingActive = ref(false) // Para control interno del WebSocket
+
+// Variables para WebSocket streaming
+let ws = null
+let audioContext = null
+let isPlayingAudio = false
+let lastPlayTime = 0
 
 let pollingInterval = null
+let streamingPollingInterval = null // 🔹 NUEVO: Polling para estado de streaming
 
 const sections = ref([])
 
+// 🔹 NUEVA: Función para verificar estado de streaming desde backend
+const checkStreamingStatus = async () => {
+    try {
+        const response = await axios.get('http://localhost:8000/api3/')
+        const newStatus = response.data.activate  // ← CAMBIADO de "is_active" a "activate"
+        
+        if (newStatus !== streamingStatus.value) {
+            streamingStatus.value = newStatus
+            console.log(`📡 Estado de streaming actualizado: ${newStatus}`)
+            
+            // Si el backend dice que hay streaming, conectar WebSocket automáticamente
+            if (newStatus && !isStreamingActive.value) {
+                connectWebSocket()
+            } else if (!newStatus && isStreamingActive.value) {
+                stopStreaming()
+            }
+        }
+    } catch (error) {
+        console.error('Error verificando estado de streaming:', error)
+    }
+}
+
+// 🔹 MODIFICADO: Watcher para cambios en streamingStatus
+watch(streamingStatus, (newVal) => {
+    if (newVal) {
+        // Cuando se activa el streaming desde el admin, conectar WebSocket automáticamente
+        if (!isStreamingActive.value) {
+            connectWebSocket()
+        }
+    } else {
+        // Cuando se desactiva, desconectar
+        if (isStreamingActive.value) {
+            stopStreaming()
+        }
+    }
+})
+
+// 🔹 MODIFICADO: Funciones de streaming WebSocket
+const toggleStreaming = () => {
+    if (isStreamingActive.value) {
+        stopStreaming()
+    } else {
+        // El usuario no puede iniciar streaming, solo el admin
+        console.log('🎤 Solo el administrador puede iniciar transmisión en vivo')
+        // Podrías mostrar un mensaje al usuario aquí
+    }
+}
+
+const startStreaming = () => {
+    if (isStreamingActive.value) return
+    isStreamingActive.value = true
+    connectWebSocket()
+}
+
+const connectWebSocket = () => {
+    try {
+        ws = new WebSocket("wss://prueba-radio.onrender.com/ws/streaming/")
+        ws.binaryType = "arraybuffer"
+
+        ws.onopen = () => {
+            console.log('✅ WebSocket CONECTADO para streaming')
+            initializeAudioContext()
+        }
+
+        ws.onmessage = (event) => {
+            if (!isStreamingActive.value || !audioContext) return
+
+            if (event.data instanceof ArrayBuffer && event.data.byteLength > 0) {
+                processRawAudio(event.data)
+            }
+        }
+
+        ws.onclose = (event) => {
+            console.log('WebSocket cerrado')
+            isStreamingActive.value = false
+            
+            if (event.code !== 1000) {
+                // Reconectar después de 3 segundos si no fue una desconexión intencional
+                setTimeout(() => {
+                    if (streamingStatus.value && !isStreamingActive.value) {
+                        connectWebSocket()
+                    }
+                }, 3000)
+            }
+        }
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error)
+            isStreamingActive.value = false
+        }
+
+    } catch (error) {
+        console.error('Error conectando WebSocket:', error)
+        isStreamingActive.value = false
+    }
+}
+
+const initializeAudioContext = () => {
+    try {
+        audioContext = new AudioContext({ sampleRate: 48000 })
+        console.log('🔊 AudioContext HD listo para streaming')
+    } catch (error) {
+        console.error('Error inicializando audio:', error)
+        stopStreaming()
+    }
+}
+
+const processRawAudio = (rawData) => {
+    if (!audioContext) return
+
+    try {
+        // Convertir Int16 back to Float32
+        const int16Data = new Int16Array(rawData)
+        const float32Data = new Float32Array(int16Data.length)
+        
+        for (let i = 0; i < int16Data.length; i++) {
+            float32Data[i] = int16Data[i] / (int16Data[i] < 0 ? 0x8000 : 0x7FFF)
+        }
+
+        // Aplicar filtro de suavizado para mejor calidad
+        const smoothedData = smoothAudio(float32Data)
+
+        // Crear buffer de audio
+        const audioBuffer = audioContext.createBuffer(1, smoothedData.length, 48000)
+        audioBuffer.getChannelData(0).set(smoothedData)
+
+        // Controlar timing para evitar solapamiento
+        const now = audioContext.currentTime
+        const playTime = Math.max(lastPlayTime, now)
+        
+        // Crear fuente y reproducir
+        const source = audioContext.createBufferSource()
+        source.buffer = audioBuffer
+        source.connect(audioContext.destination)
+        source.start(playTime)
+        
+        lastPlayTime = playTime + audioBuffer.duration
+
+        if (!isPlayingAudio) {
+            isPlayingAudio = true
+            console.log('🎵 Audio HD streaming reproduciéndose!')
+        }
+
+    } catch (error) {
+        console.log('Error procesando audio streaming:', error)
+    }
+}
+
+// Filtro de suavizado para mejor calidad
+const smoothAudio = (input) => {
+    const output = new Float32Array(input.length)
+    
+    // Filtro simple para reducir ruido
+    for (let i = 0; i < input.length; i++) {
+        if (i === 0 || i === input.length - 1) {
+            output[i] = input[i]
+        } else {
+            // Promedio suavizado
+            output[i] = (input[i-1] + input[i] + input[i+1]) / 3
+        }
+    }
+    
+    return output
+}
+
+const stopStreaming = () => {
+    console.log('🛑 Deteniendo streaming...')
+    isStreamingActive.value = false
+    isPlayingAudio = false
+    lastPlayTime = 0
+    
+    if (ws) {
+        ws.close(1000, "Usuario detuvo")
+        ws = null
+    }
+    
+    if (audioContext) {
+        audioContext.close()
+        audioContext = null
+    }
+}
+
 // Watcher para cambios en avisoAudio
 watch(avisoAudio, (newAviso, oldAviso) => {
-  console.log('AvisoAudio cambiado:', newAviso)
-  
-  if (newAviso?.activo && newAviso?.file) {
-    useMensajeInterface.value = true
-    isInMensajeCycle.value = true
-    
-    nextTick(() => {
-      setTimeout(() => {
-        attemptAudioPlayback()
-      }, 100)
-    })
-  } else if (oldAviso?.activo && !newAviso?.activo) {
-    if (audioPlayer.value) {
-      audioPlayer.value.pause()
-      audioPlayer.value.currentTime = 0
+    if (newAviso?.activo && newAviso?.audio_file) {
+        useMensajeInterface.value = true
+        
+        nextTick(() => {
+            setTimeout(() => {
+                attemptAudioPlayback()
+            }, 100)
+        })
+    } else if (oldAviso?.activo && !newAviso?.activo) {
+        if (audioPlayer.value) {
+            audioPlayer.value.pause()
+            audioPlayer.value.currentTime = 0
+        }
+        isPlaying.value = false
+        useMensajeInterface.value = false
     }
-    isPlaying.value = false
-    useMensajeInterface.value = false
-    isInMensajeCycle.value = false
-  }
 })
 
-// Watcher para cambios en audioFiles - SOLO para nuevos audios después del primer ciclo
-watch(audioFiles, (newAudioFiles, oldAudioFiles) => {
-  console.log('Audio files cambiaron:', newAudioFiles)
-  
-  const currentState = JSON.stringify(newAudioFiles)
-  const oldState = JSON.stringify(oldAudioFiles)
-  
-  // Solo procesar si realmente hay cambios y no estamos en ciclo Y ya pasó el primer ciclo
-  if (newAudioFiles && newAudioFiles.length > 0 && currentState !== oldState && !isInMensajeCycle.value && hasStartedFirstCycle.value) {
-    console.log('Nuevos audios detectados después del primer ciclo, reiniciando ciclo...')
-    
-    // Limpiar timer anterior si existe
-    if (cycleTimer.value) {
-      clearTimeout(cycleTimer.value)
+// Watcher para cambios en streamingStatus
+watch(streamingStatus, (newVal) => {
+    if (newVal) {
+        // Cuando se activa el streaming, pausar cualquier audio actual
+        if (audioPlayer.value) {
+            audioPlayer.value.pause()
+            audioPlayer.value.currentTime = 0
+        }
+        isPlaying.value = false
     }
-    
-    // Programar nuevo ciclo en 15 segundos
-    cycleTimer.value = setTimeout(() => {
-      startMensajeCycle()
-    }, 15000)
-  }
 })
 
-// Iniciar ciclo de mensaje
-const startMensajeCycle = () => {
-  if (audioFiles.value && audioFiles.value.length > 0) {
-    console.log('🚀 INICIANDO CICLO DE MENSAJE...')
-    hasStartedFirstCycle.value = true
-    
-    // Actualizar avisoAudio con el primer audio
-    avisoAudio.value = {
-      activo: true,
-      audio_file: audioFiles.value[0]?.file || audioFiles.value[0]?.url || null,
-      file: audioFiles.value[0]?.file || audioFiles.value[0]?.url || null,
-      ...audioFiles.value[0]
-    }
-    
-    currentAudioIndex.value = 0
-    console.log('AvisoAudio configurado para ciclo:', avisoAudio.value)
-  }
-}
-
-// Finalizar ciclo de mensaje y programar próximo
-const finishMensajeCycle = () => {
-  console.log('✅ FINALIZANDO CICLO DE MENSAJE, volviendo a interfaz normal')
-  
-  if (audioPlayer.value) {
-    audioPlayer.value.pause()
-    audioPlayer.value.currentTime = 0
-  }
-  
-  isPlaying.value = false
-  useMensajeInterface.value = false
-  isInMensajeCycle.value = false
-  currentAudioIndex.value = 0
-  
-  avisoAudio.value = {
-    activo: false,
-    audio_file: null,
-    file: null
-  }
-  
-  // Limpiar timer anterior si existe
-  if (cycleTimer.value) {
-    clearTimeout(cycleTimer.value)
-  }
-  
-  // Programar próximo ciclo en 15 segundos EXACTOS SOLO si hay audios
-  if (audioFiles.value && audioFiles.value.length > 0) {
-    console.log('🔄 Programando próximo ciclo en 15 segundos EXACTOS...')
-    const startTime = Date.now()
-    cycleTimer.value = setTimeout(() => {
-      const elapsed = Date.now() - startTime
-      console.log(`⏰ Timer ejecutado después de: ${elapsed}ms`)
-      startMensajeCycle()
-    }, 15000) // 15 segundos exactos
-  }
-}
-
-// Intentar reproducir el audio actual
+// Intentar reproducir el audio
 const attemptAudioPlayback = async () => {
-  if (!audioPlayer.value || !avisoAudio.value?.activo) {
-    console.log('No se puede reproducir: audioPlayer no disponible o aviso no activo')
-    return
-  }
-
-  const audioUrl = avisoAudio.value.file || avisoAudio.value.audio_file
-  if (!audioUrl) {
-    console.log('No hay URL de audio disponible')
-    finishMensajeCycle()
-    return
-  }
-
-  console.log('▶️ Intentando reproducir audio desde:', audioUrl)
-  
-  try {
-    // Limpiar eventos anteriores para evitar duplicados
-    audioPlayer.value.oncanplaythrough = null
-    audioPlayer.value.onerror = null
+    if (!audioPlayer.value || !avisoAudio.value?.activo || streamingStatus.value) return
     
-    audioPlayer.value.src = audioUrl
-    audioPlayer.value.load()
-    
-    await new Promise((resolve, reject) => {
-      const onCanPlay = () => {
-        audioPlayer.value.removeEventListener('error', onError)
-        resolve()
-      }
-      
-      const onError = (error) => {
-        audioPlayer.value.removeEventListener('canplaythrough', onCanPlay)
-        reject(error)
-      }
-      
-      if (audioPlayer.value.readyState >= 3) {
-        resolve()
-      } else {
-        audioPlayer.value.addEventListener('canplaythrough', onCanPlay, { once: true })
-        audioPlayer.value.addEventListener('error', onError, { once: true })
-      }
-    })
-    
-    console.log('🎵 Reproduciendo audio...')
-    await audioPlayer.value.play()
-    isPlaying.value = true
-    
-  } catch (error) {
-    console.error('❌ Error al reproducir audio:', error)
-    finishMensajeCycle()
-  }
-}
-
-// Reproducir el siguiente audio en la lista
-const playNextAudio = () => {
-  console.log('⏭️ Reproduciendo siguiente audio...')
-  
-  if (!audioFiles.value || audioFiles.value.length === 0) {
-    console.log('No hay audios disponibles')
-    finishMensajeCycle()
-    return
-  }
-  
-  const nextIndex = currentAudioIndex.value + 1
-  console.log(`Audio actual: ${currentAudioIndex.value}, Siguiente: ${nextIndex}, Total: ${audioFiles.value.length}`)
-  
-  if (nextIndex < audioFiles.value.length) {
-    currentAudioIndex.value = nextIndex
-    
-    const nextAudio = audioFiles.value[nextIndex]
-    avisoAudio.value = {
-      activo: true,
-      audio_file: nextAudio?.file || nextAudio?.url || null,
-      file: nextAudio?.file || nextAudio?.url || null,
-      ...nextAudio
+    try {
+        audioPlayer.value.load()
+        
+        await new Promise((resolve) => {
+            if (audioPlayer.value.readyState >= 3) {
+                resolve()
+            } else {
+                audioPlayer.value.addEventListener('canplaythrough', resolve, { once: true })
+            }
+        })
+        
+        await audioPlayer.value.play()
+        isPlaying.value = true
+        
+    } catch (error) {
+        // Autoplay bloqueado, se reproducirá con interacción del usuario
     }
-    
-    console.log('Siguiente audio configurado:', avisoAudio.value)
-    
-    setTimeout(() => {
-      attemptAudioPlayback()
-    }, 500)
-  } else {
-    console.log('🎯 Todos los audios reproducidos')
-    finishMensajeCycle()
-  }
 }
 
 // Configurar interacción del usuario
 const setupUserInteraction = () => {
-  const handleFirstInteraction = () => {
-    userInteracted.value = true
-    console.log('Usuario interactuó, intentando reproducir audio si está disponible')
-    
-    if (avisoAudio.value?.activo && audioPlayer.value && !isPlaying.value) {
-      attemptAudioPlayback()
+    const handleFirstInteraction = () => {
+        userInteracted.value = true
+        
+        if (avisoAudio.value?.activo && audioPlayer.value && !isPlaying.value && !streamingStatus.value) {
+            attemptAudioPlayback()
+        }
+        
+        document.removeEventListener('click', handleFirstInteraction)
+        document.removeEventListener('touchstart', handleFirstInteraction)
+        document.removeEventListener('keydown', handleFirstInteraction)
     }
     
-    document.removeEventListener('click', handleFirstInteraction)
-    document.removeEventListener('touchstart', handleFirstInteraction)
-    document.removeEventListener('keydown', handleFirstInteraction)
-  }
-  
-  document.addEventListener('click', handleFirstInteraction, { once: true })
-  document.addEventListener('touchstart', handleFirstInteraction, { once: true })
-  document.addEventListener('keydown', handleFirstInteraction, { once: true })
+    document.addEventListener('click', handleFirstInteraction, { once: true })
+    document.addEventListener('touchstart', handleFirstInteraction, { once: true })
+    document.addEventListener('keydown', handleFirstInteraction, { once: true })
 }
 
 // Eventos del audio
 const handleLoadedMetadata = () => {
-  console.log('📊 Metadatos del audio cargados')
+    // Metadatos cargados
 }
 
 const handleCanPlay = () => {
-  console.log('✅ Audio listo para reproducir')
+    // Audio listo
 }
 
 const handleAudioPlay = () => {
-  console.log('▶️ Audio empezó a reproducirse')
-  isPlaying.value = true
+    isPlaying.value = true
 }
 
 const handleAudioPause = () => {
-  console.log('⏸️ Audio pausado')
-  isPlaying.value = false
+    isPlaying.value = false
 }
 
 const handleAudioEnded = () => {
-  console.log('⏹️ Audio terminado')
-  isPlaying.value = false
-  
-  playNextAudio()
+    isPlaying.value = false
+    setTimeout(checkAvisoStatus, 100)
 }
 
-const handleAudioError = (e) => {
-  console.error('❌ Error en el audio:', e)
-  setTimeout(() => {
-    playNextAudio()
-  }, 1000)
-}
-
-// Polling para obtener audios
+// Polling para avisos
 const clearPolling = () => {
-  if (pollingInterval) {
-    console.log('Limpiando intervalo de polling')
-    clearInterval(pollingInterval)
-    pollingInterval = null
-  }
+    if (pollingInterval) {
+        clearInterval(pollingInterval)
+        pollingInterval = null
+    }
 }
 
 const setupPolling = () => {
-  clearPolling()
-  
-  console.log('Configurando polling cada 30 segundos')
-  pollingInterval = setInterval(checkAudioStatus, 30000)
-}
-
-const checkAudioStatus = async () => {
-  console.log('🔍 Consultando API de audios...')
-  try {
-    const response = await axios.get('https://api.kyeroradio.com/api/audios/')
-    const audioData = response.data
-    console.log('Datos recibidos de la API:', audioData)
+    clearPolling()
     
-    const currentState = JSON.stringify(audioData)
-    if (currentState !== lastAudioState.value) {
-      console.log('🆕 Nuevos datos de audio detectados')
-      lastAudioState.value = currentState
-      audioFiles.value = audioData
-    } else {
-      console.log('📝 No hay cambios en los datos de audio')
+    const intervalTime = avisoAudio.value?.activo ? 2000 : 5000
+    pollingInterval = setInterval(checkAvisoStatus, intervalTime)
+}
+
+// 🔹 NUEVO: Polling para estado de streaming
+const setupStreamingPolling = () => {
+    streamingPollingInterval = setInterval(checkStreamingStatus, 2000) // Verificar cada 2 segundos
+}
+
+const clearStreamingPolling = () => {
+    if (streamingPollingInterval) {
+        clearInterval(streamingPollingInterval)
+        streamingPollingInterval = null
     }
-  } catch (error) {
-    console.error('❌ Error al obtener audios:', error)
-    audioFiles.value = []
-  }
 }
 
-// Limpiar todos los timers
-const clearAllTimers = () => {
-  if (cycleTimer.value) {
-    clearTimeout(cycleTimer.value)
-    cycleTimer.value = null
-  }
-  clearPolling()
-}
-
-const setActiveMenu = (menu) => {
-  activeMenu.value = menu
+const checkAvisoStatus = async () => {
+    try {
+        const response = await axios.get('http://localhost:8000/api2/aviso/2/')
+        const avisoData = response.data
+        
+        const currentState = JSON.stringify(avisoData)
+        if (currentState !== lastAvisoState.value) {
+            lastAvisoState.value = currentState
+            avisoAudio.value = avisoData
+        }
+    } catch (error) {
+        // Error en la consulta
+    }
 }
 
 const handlePlayTrack = (track) => {
-  currentTrack.value = track
-  isPlaying.value = true
-}
-
-const togglePlay = () => {
-  console.log('Toggle play clicked')
-  if (audioPlayer.value && avisoAudio.value?.activo) {
-    if (isPlaying.value) {
-      audioPlayer.value.pause()
-    } else {
-      audioPlayer.value.play().catch((error) => {
-        console.error('Error al reproducir:', error)
-      })
-    }
-  }
+    currentTrack.value = track
+    isPlaying.value = true
 }
 
 onMounted(async () => {
-  console.log('🏠 Componente montado - INICIANDO CON REPRODUCTOR NORMAL')
-  setupUserInteraction()
-  await checkAudioStatus()
-  setupPolling()
-  
-  // Solo cargar, iniciar primer ciclo después de loading
-  setTimeout(() => {
-    isLoading.value = false
-    console.log('✅ Loading completado - REPRODUCTOR NORMAL ACTIVO')
+    setupUserInteraction()
+    await checkAvisoStatus()
+    await checkStreamingStatus() // 🔹 Verificar estado al cargar
+    setupPolling()
+    setupStreamingPolling() // 🔹 Iniciar polling de streaming
     
-    // Programar PRIMER Y ÚNICO ciclo en 15 segundos si hay audios
-    if (audioFiles.value && audioFiles.value.length > 0 && !hasStartedFirstCycle.value) {
-      console.log('🕒 Primer ciclo programado en 15 segundos EXACTOS...')
-      const startTime = Date.now()
-      cycleTimer.value = setTimeout(() => {
-        const elapsed = Date.now() - startTime
-        console.log(`⏰ Primer timer ejecutado después de: ${elapsed}ms`)
-        startMensajeCycle()
-      }, 15000) // 15 segundos exactos
-    }
-  }, 3000)
+    setTimeout(() => {
+        isLoading.value = false
+    }, 3000)
 })
 
 onUnmounted(() => {
-  console.log('🔚 Componente desmontado')
-  clearAllTimers()
+    clearPolling()
+    clearStreamingPolling() // 🔹 Limpiar polling de streaming
+    stopStreaming()
 })
 </script>
 
 <style scoped>
+/* Tus estilos existentes se mantienen igual */
 .global-background {
   background: linear-gradient(135deg, #009DDB 0%, #007DB8 50%, #005A87 100%);
   color: var(--text-primary);
@@ -501,26 +517,21 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   min-height: 100vh;
-  padding-bottom: 130px;
 }
 
 .main-content {
-  min-height: calc(100vh - 130px);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-/* El resto de tus estilos se mantienen igual */
-.demo-content {
-  padding: 20px;
-  color: white;
-  text-align: center;
+/* Asegurar que el footer quede pegado abajo */
+.main-content > *:not(footer) {
+  flex: 1 0 auto;
 }
 
-.demo-box {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 20px;
-  border-radius: 10px;
-  margin: 10px;
-  backdrop-filter: blur(10px);
+.main-content > footer {
+  flex-shrink: 0;
 }
 
 audio {
@@ -529,29 +540,20 @@ audio {
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .app-container {
-    padding-bottom: 100px;
-  }
   .main-content {
-    min-height: calc(100vh - 100px);
+    min-height: 100vh;
   }
 }
 
 @media (max-width: 768px) {
-  .app-container {
-    padding-bottom: 80px;
-  }
   .main-content {
-    min-height: calc(100vh - 80px);
+    min-height: 100vh;
   }
 }
 
 @media (max-width: 480px) {
-  .app-container {
-    padding-bottom: 70px;
-  }
   .main-content {
-    min-height: calc(100vh - 70px);
+    min-height: 100vh;
   }
 }
 </style>

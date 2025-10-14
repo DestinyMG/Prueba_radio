@@ -24,6 +24,9 @@ urlpatterns = [
     path('api/', include('audios.urls')),  # nuestra API de audios
     path('api/login/', include('login.urls')),
     path('api2/', include('aviso.urls')),
+    path('api3/', include('streaming_confirmation.urls')),
+    path('api4/', include('news.urls')),  # Incluye las URLs de tu app news
+    path('api4/', include('programacion.urls')),
    
 ]
 

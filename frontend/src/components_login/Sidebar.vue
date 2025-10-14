@@ -1,77 +1,113 @@
 <template>
-    <aside class="sidebar">
-        <div class="menu-section">
-            <span class="menu-title">MENÚ</span>
-            <ul>
-                <li class="active">
-                    <RouterLink to="audios" class="menu-link">
-                        <i class="icon">🏠</i> <span>Audios</span>
-                    </RouterLink>
-                </li>
-                <li>
-                    <a href="#">
-                        <i class="icon">🔍</i>
-                        <span>Explorar</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <i class="icon">📻</i>
-                        <span>Radio</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <i class="icon">📅</i>
-                        <span>Programación</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-        <div class="library-section">
-            <span class="menu-title">TU BIBLIOTECA</span>
-            <ul>
-                <li>
-                    <RouterLink to="streaming" class="menu-link">
-                        <i class="icon">❤️</i>
-                        <span>Streaming</span>
-                    </RouterLink>
-                </li>
-                <li>
-                    <a href="#">
-                        <i class="icon">🕒</i>
-                        <span>Recientes</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <i class="icon">📄</i>
-                        <span>Listas</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-        <div class="logout-section">
-            <a href="#" class="logout-btn" @click.prevent="logout">
-                <i class="icon">➡️</i>
-                <span>Cerrar Sesión</span>
-            </a>
-        </div>
-    </aside>
+    <div>
+        <!-- Botón hamburguesa para móviles -->
+        <button class="menu-toggle" @click="toggleSidebar">
+            ☰
+        </button>
+        
+        <!-- Overlay para móviles -->
+        <div class="overlay" :class="{ active: sidebarOpen }" @click="closeSidebar"></div>
+        
+        <aside class="sidebar" :class="{ open: sidebarOpen }">
+            <div class="menu-section">
+                <span class="menu-title">MENÚ</span>
+                <ul>
+                    <li class="active">
+                        <RouterLink to="audios" class="menu-link" @click="closeSidebar">
+                            <i class="icon">🏠</i> <span>Audios</span>
+                        </RouterLink>
+                    </li>
+                    <li>
+                        <a href="#" @click="closeSidebar">
+                            <i class="icon">🔍</i>
+                            <span>Explorar</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" @click="closeSidebar">
+                            <i class="icon">📻</i>
+                            <span>Radio</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" @click="closeSidebar">
+                            <i class="icon">📅</i>
+                            <span>Programación</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="library-section">
+                <span class="menu-title">TU BIBLIOTECA</span>
+                <ul>
+                    <li>
+                        <RouterLink to="/" class="menu-link" @click="closeSidebar">
+                            <i class="icon">❤️</i>
+                            <span>Streaming</span>
+                        </RouterLink>
+                    </li>
+                    <li>
+                        <a href="#" @click="closeSidebar">
+                            <i class="icon">🕒</i>
+                            <span>Recientes</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" @click="closeSidebar">
+                            <i class="icon">📄</i>
+                            <span>Listas</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="logout-section">
+                <a href="#" class="logout-btn" @click.prevent="logout">
+                    <i class="icon">➡️</i>
+                    <span>Cerrar Sesión</span>
+                </a>
+            </div>
+        </aside>
+    </div>
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const sidebarOpen = ref(false)
+
+const toggleSidebar = () => {
+    sidebarOpen.value = !sidebarOpen.value
+}
+
+const closeSidebar = () => {
+    if (window.innerWidth <= 768) {
+        sidebarOpen.value = false
+    }
+}
 
 const logout = () => {
     // Borrar tokens
     localStorage.removeItem('auth_tokens')
-
     // Redirigir al login
     router.push('/login')
 }
+
+// Cerrar sidebar al redimensionar a pantalla grande
+const handleResize = () => {
+    if (window.innerWidth > 768) {
+        sidebarOpen.value = false
+    }
+}
+
+onMounted(() => {
+    window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+    window.removeEventListener('resize', handleResize)
+})
 </script>
 
 <style scoped>
@@ -81,13 +117,11 @@ const logout = () => {
     padding: 24px;
     display: flex;
     flex-direction: column;
-    /* QUITAMOS el gap general y lo manejamos con márgenes */
-    /* gap: 30px; */
     height: 100vh;
     flex-shrink: 0;
+    transition: transform 0.3s ease;
 }
 
-/* Agregamos un margen inferior a las secciones existentes para separarlas */
 .menu-section,
 .library-section {
     margin-bottom: 30px;
@@ -135,20 +169,12 @@ li a:hover {
     font-style: normal;
 }
 
-/* ---------------------------------
-   ESTILOS PARA CERRAR SESIÓN 
-   ---------------------------------
-*/
-
 .logout-section {
-    /* Esta es la clave: empuja el elemento al final del contenedor flexbox */
     margin-top: auto;
     padding-top: 24px;
-    /* Opcional: agregar un poco de espacio arriba si es necesario */
 }
 
 .logout-btn {
-    /* Reutilizamos el estilo general de los enlaces del menú */
     display: flex;
     align-items: center;
     gap: 15px;
@@ -156,16 +182,89 @@ li a:hover {
     border-radius: 8px;
     text-decoration: none;
     color: #d32f2f;
-    /* Un color rojo para hacerlo destacar */
     font-weight: 500;
     transition: background-color 0.2s, color 0.2s;
     width: 100%;
-    /* Asegura que ocupe todo el ancho para el hover */
 }
 
 .logout-btn:hover {
     background-color: #ffebee;
-    /* Fondo rojo muy claro al pasar el ratón */
     color: #b71c1c;
+}
+
+/* Elementos responsive */
+.menu-toggle {
+    display: none;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1001;
+    background: #03a9f4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+}
+
+.overlay.active {
+    display: block;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .menu-toggle {
+        display: block;
+    }
+    
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        transform: translateX(-100%);
+        z-index: 999;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    }
+    
+    .sidebar.open {
+        transform: translateX(0);
+    }
+}
+
+/* Responsive para tablets */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .sidebar {
+        width: 70px;
+        padding: 24px 10px;
+        align-items: center;
+    }
+    
+    .sidebar .menu-title,
+    .sidebar span:not(.icon) {
+        display: none;
+    }
+    
+    .sidebar li a {
+        justify-content: center;
+        padding: 10px;
+    }
+    
+    .sidebar .icon {
+        margin: 0;
+    }
 }
 </style>

@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Crear instancia de Axios
 const api = axios.create({
-    baseURL: 'https://prueba-radio.onrender.com/api/',
+    baseURL: 'http://localhost:8000/api/',
     headers: {
         'Content-Type': 'application/json'
     }
@@ -36,7 +36,7 @@ api.interceptors.response.use(
             const tokens = getTokens()
             if (tokens && tokens.refresh) {
                 try {
-                    const response = await axios.post('https://prueba-radio.onrender.com/api/login/token/refresh/', {
+                    const response = await axios.post('http://localhost:8000/api/login/token/refresh/', {
                         refresh: tokens.refresh
                     })
 

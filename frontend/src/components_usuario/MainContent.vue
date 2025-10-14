@@ -21,7 +21,7 @@
         </iframe>
       </div>
 
-      <!-- Panel de Noticias -->
+      <!-- Panel de Noticias - MISMA ALTURA QUE EL REPRODUCTOR -->
       <div class="news-panel">
         <div class="news-header">
           <div class="news-title-container">
@@ -41,12 +41,11 @@
         
         <div class="news-content">
           <transition :name="transitionDirection" mode="out-in">
-            <div class="news-item" :key="currentNewsIndex">
-              <div class="news-badge">{{ currentNews.type }}</div>
+            <div class="news-item" :key="currentNewsIndex" v-if="currentNews">
+              <div class="news-badge">{{ currentNews.label }}</div>
               <h4 class="news-message">{{ currentNews.message }}</h4>
               <div class="news-time">
-                <i class="far fa-clock"></i>
-                <span>{{ currentNews.time }}</span>
+                <a :href="currentNews.url" target="_blank" class="news-url">{{ currentNews.shortUrl }}</a>
               </div>
             </div>
           </transition>
@@ -61,10 +60,6 @@
           <i class="fas fa-calendar-alt"></i>
           <h2 class="section-title">Programación Diaria</h2>
         </div>
-        <div class="view-all">
-          <span>Ver programación completa</span>
-          <i class="fas fa-chevron-right"></i>
-        </div>
       </div>
       
       <div class="carousel-container">
@@ -73,193 +68,36 @@
         </div>
         
         <div class="shows-container" ref="programmingCarousel">
-          <!-- Programa 1 -->
-          <div class="show-card">
-            <div class="show-badge">En vivo</div>
+          <!-- Programas Dinámicos desde BD -->
+          <div 
+            v-for="programa in programas" 
+            :key="programa.id" 
+            class="show-card"
+          >
             <div class="show-image-container">
-              <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
-                   alt="Música Relajante" class="show-image">
+              <img 
+                :src="programa.imagen_url || '/default-program.jpg'" 
+                :alt="programa.nombre" 
+                class="show-image"
+                @error="handleImageError"
+              >
               <div class="show-overlay"></div>
             </div>
             <div class="show-content">
-              <div class="show-category">Música</div>
-              <h3 class="show-name">Música Relajante</h3>
-              <p class="show-description">Ritmos suaves para tu día</p>
+              <div class="show-category">{{ programa.label }}</div>
+              <h3 class="show-name">{{ programa.nombre }}</h3>
+              <p class="show-description">{{ programa.descripcion }}</p>
               <div class="time-slot">
                 <i class="far fa-clock"></i>
-                <span>10:00 AM - 12:00 PM</span>
+                <span>{{ formatTime(programa.hora_inicio) }} - {{ formatTime(programa.hora_fin) }}</span>
               </div>
-              <div class="show-host">
-                <i class="fas fa-user"></i>
-                <span>DJ Carlos</span>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Programa 2 -->
-          <div class="show-card">
-            <div class="show-image-container">
-              <img src="https://images.unsplash.com/photo-1496293455970-f8581aae0e3b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
-                   alt="Éxitos del Momento" class="show-image">
-              <div class="show-overlay"></div>
-            </div>
-            <div class="show-content">
-              <div class="show-category">Música</div>
-              <h3 class="show-name">Éxitos del Momento</h3>
-              <p class="show-description">Lo más popular ahora</p>
-              <div class="time-slot">
-                <i class="far fa-clock"></i>
-                <span>12:00 PM - 2:00 PM</span>
-              </div>
-              <div class="show-host">
-                <i class="fas fa-user"></i>
-                <span>DJ María</span>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Programa 3 -->
-          <div class="show-card">
-            <div class="show-image-container">
-              <img src="https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
-                   alt="Vibraciones Jazz" class="show-image">
-              <div class="show-overlay"></div>
-            </div>
-            <div class="show-content">
-              <div class="show-category">Jazz</div>
-              <h3 class="show-name">Vibraciones Jazz</h3>
-              <p class="show-description">Melodías suaves de jazz</p>
-              <div class="time-slot">
-                <i class="far fa-clock"></i>
-                <span>2:00 PM - 4:00 PM</span>
-              </div>
-              <div class="show-host">
-                <i class="fas fa-user"></i>
-                <span>DJ Roberto</span>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Programa 4 -->
-          <div class="show-card">
-            <div class="show-image-container">
-              <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
-                   alt="Nación Rock" class="show-image">
-              <div class="show-overlay"></div>
-            </div>
-            <div class="show-content">
-              <div class="show-category">Rock</div>
-              <h3 class="show-name">Nación Rock</h3>
-              <p class="show-description">Lo mejor del rock</p>
-              <div class="time-slot">
-                <i class="far fa-clock"></i>
-                <span>4:00 PM - 6:00 PM</span>
-              </div>
-              <div class="show-host">
-                <i class="fas fa-user"></i>
-                <span>DJ Ana</span>
-              </div>
-            </div>
-          </div>
-          
-         <!-- Programa 5 -->
-<div class="show-card">
-  <div class="show-image-container">
-    <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
-         alt="Noche Latina" class="show-image">
-    <div class="show-overlay"></div>
-  </div>
-  <div class="show-content">
-    <div class="show-category">Latina</div>
-    <h3 class="show-name">Noche Latina</h3>
-    <p class="show-description">Ritmos latinos para bailar</p>
-    <div class="time-slot">
-      <i class="far fa-clock"></i>
-      <span>6:00 PM - 8:00 PM</span>
-    </div>
-    <div class="show-host">
-      <i class="fas fa-user"></i>
-      <span>DJ Luis</span>
-    </div>
-  </div>
-</div>
-          
-          <!-- Programa 6 -->
-          <div class="show-card">
-            <div class="show-image-container">
-              <img src="https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
-                   alt="Electrónica Nocturna" class="show-image">
-              <div class="show-overlay"></div>
-            </div>
-            <div class="show-content">
-              <div class="show-category">Electrónica</div>
-              <h3 class="show-name">Electrónica Nocturna</h3>
-              <p class="show-description">Los mejores beats electrónicos</p>
-              <div class="time-slot">
-                <i class="far fa-clock"></i>
-                <span>8:00 PM - 10:00 PM</span>
-              </div>
-              <div class="show-host">
-                <i class="fas fa-user"></i>
-                <span>DJ Sofia</span>
-              </div>
+              <!-- ELIMINADO: show-host section -->
             </div>
           </div>
         </div>
         
         <div class="carousel-nav right" @click="scrollRight">
           <i class="fas fa-chevron-right"></i>
-        </div>
-      </div>
-    </div>
-
-    <!-- Sección de Próximos Programas -->
-    <div class="upcoming-section">
-      <div class="section-header">
-        <div class="section-title-container">
-          <i class="fas fa-forward"></i>
-          <h2 class="section-title">Próximos Programas</h2>
-        </div>
-      </div>
-      
-      <div class="upcoming-list">
-        <div class="upcoming-item">
-          <div class="upcoming-time">
-            <span class="time">10:00 PM</span>
-          </div>
-          <div class="upcoming-info">
-            <h3 class="upcoming-title">Noche de Soul</h3>
-            <p class="upcoming-description">Los mejores clásicos del soul</p>
-          </div>
-          <div class="upcoming-category">
-            <span>Soul</span>
-          </div>
-        </div>
-        
-        <div class="upcoming-item">
-          <div class="upcoming-time">
-            <span class="time">12:00 AM</span>
-          </div>
-          <div class="upcoming-info">
-            <h3 class="upcoming-title">Música para Soñar</h3>
-            <p class="upcoming-description">Melodías suaves para descansar</p>
-          </div>
-          <div class="upcoming-category">
-            <span>Relax</span>
-          </div>
-        </div>
-        
-        <div class="upcoming-item">
-          <div class="upcoming-time">
-            <span class="time">06:00 AM</span>
-          </div>
-          <div class="upcoming-info">
-            <h3 class="upcoming-title">Despertar Musical</h3>
-            <p class="upcoming-description">Comienza tu día con energía</p>
-          </div>
-          <div class="upcoming-category">
-            <span>Variado</span>
-          </div>
         </div>
       </div>
     </div>
@@ -270,35 +108,91 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const programmingCarousel = ref(null)
+
+// Variables para el panel de noticias
+const newsItems = ref([])
 const currentNewsIndex = ref(0)
 const transitionDirection = ref('slide-next')
 
-// Solo 2 noticias como solicitaste
-const newsItems = ref([
-  {
-    type: "Mensaje",
-    message: "Transmisión especial por aniversario",
-    time: "Hoy 8:00 PM"
-  },
-  {
-    type: "Streaming",
-    message: "En vivo desde el Festival Internacional",
-    time: "Mañana 9:00 PM"
+// Variables para programas desde BD
+const programas = ref([])
+const API_BASE_URL = 'http://localhost:8000/api4'
+
+// Función para formatear hora de 24h a 12h (AM/PM)
+const formatTime = (timeString) => {
+  if (!timeString) return ''
+  
+  // Si ya está en formato AM/PM, retornar tal cual
+  if (timeString.includes('AM') || timeString.includes('PM')) {
+    return timeString
   }
-])
+  
+  // Convertir de formato 24h a 12h
+  const [hours, minutes] = timeString.split(':')
+  let hour = parseInt(hours)
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+  
+  // Convertir a formato 12h
+  hour = hour % 12
+  hour = hour === 0 ? 12 : hour // 0 se convierte en 12
+  
+  return `${hour}:${minutes} ${ampm}`
+}
+
+// Cargar programas desde la API
+const fetchProgramas = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/programas/`)
+    if (response.ok) {
+      const data = await response.json()
+      // Filtrar solo programas activos
+      programas.value = data.filter(programa => programa.is_active)
+      console.log('Programas cargados:', programas.value) // Para debug
+    }
+  } catch (error) {
+    console.error('Error cargando programas:', error)
+  }
+}
+
+// Cargar noticias desde la API
+const fetchNews = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/news/`)
+    if (response.ok) {
+      const data = await response.json()
+      // Filtrar solo noticias activas
+      newsItems.value = data.filter(news => news.is_active)
+      console.log('Noticias cargadas:', newsItems.value) // Para debug
+    }
+  } catch (error) {
+    console.error('Error cargando noticias:', error)
+  }
+}
 
 // Noticia actual
-const currentNews = computed(() => newsItems.value[currentNewsIndex.value])
+const currentNews = computed(() => {
+  if (newsItems.value.length === 0) return null
+  return newsItems.value[currentNewsIndex.value]
+})
+
+// Manejo de errores de imagen
+const handleImageError = (event) => {
+  event.target.src = '/default-program.jpg'
+}
 
 // Funciones para el carrusel de noticias
 const nextNews = () => {
-  transitionDirection.value = 'slide-next'
-  currentNewsIndex.value = (currentNewsIndex.value + 1) % newsItems.value.length
+  if (newsItems.value.length > 0) {
+    transitionDirection.value = 'slide-next'
+    currentNewsIndex.value = (currentNewsIndex.value + 1) % newsItems.value.length
+  }
 }
 
 const setCurrentNews = (index) => {
-  transitionDirection.value = index > currentNewsIndex.value ? 'slide-next' : 'slide-prev'
-  currentNewsIndex.value = index
+  if (newsItems.value.length > 0) {
+    transitionDirection.value = index > currentNewsIndex.value ? 'slide-next' : 'slide-prev'
+    currentNewsIndex.value = index
+  }
 }
 
 // Funciones para el carrusel de programas
@@ -324,8 +218,22 @@ const scrollRight = () => {
 
 // Auto-avance de noticias
 let newsInterval
-onMounted(() => {
-  newsInterval = setInterval(nextNews, 5000) // Cambia cada 5 segundos
+
+onMounted(async () => {
+  // CARGAR DATOS AL INICIAR
+  await fetchProgramas()
+  await fetchNews()
+  
+  // Iniciar rotación solo si hay noticias
+  if (newsItems.value.length > 0) {
+    newsInterval = setInterval(nextNews, 5000) // Cambia cada 5 segundos
+  }
+  
+  // Recargar datos cada 30 segundos
+  setInterval(async () => {
+    await fetchProgramas()
+    await fetchNews()
+  }, 30000)
 })
 
 onUnmounted(() => {
@@ -338,14 +246,9 @@ onUnmounted(() => {
 <style scoped>
 .main-content {
   margin: 0;
-  padding: 100px 30px 30px 30px;
+  padding: 120px 30px 20px 30px; /* Aumentado padding-top y reducido padding-bottom */
   width: 100%;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #009DDB 0%, #007DB8 50%, #005A87 100%);
-  background-attachment: fixed;
-  background-size: cover;
-  background-repeat: no-repeat;
-  box-sizing: border-box;
+  min-height: calc(100vh - 140px); /* Ajuste para evitar espacio excesivo */
   position: relative;
 }
 
@@ -357,7 +260,6 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #009DDB 0%, #007DB8 50%, #005A87 100%);
   z-index: -1;
   pointer-events: none;
 }
@@ -371,7 +273,7 @@ onUnmounted(() => {
   align-items: start;
 }
 
-/* Estilos del reproductor */
+/* Estilos del reproductor - ALTURA EXACTA */
 .player-container {
   background: rgba(255, 255, 255, 0.98);
   border-radius: 20px;
@@ -382,7 +284,7 @@ onUnmounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
-  height: fit-content;
+  height: 172px; /* Altura total exacta del reproductor */
 }
 
 .player-container:hover {
@@ -402,6 +304,8 @@ onUnmounted(() => {
   position: relative;
   overflow: hidden;
   border-bottom: 2px solid rgba(0, 157, 219, 0.2);
+  height: 62px; /* Altura fija del header */
+  box-sizing: border-box;
 }
 
 .player-info {
@@ -427,9 +331,10 @@ onUnmounted(() => {
 .sonic-player {
   border-radius: 0 0 20px 20px;
   background: rgba(255, 255, 255, 0.98);
+  height: 110px; /* Altura fija del iframe */
 }
 
-/* Panel de Noticias */
+/* Panel de Noticias - MISMA ALTURA EXACTA QUE EL REPRODUCTOR */
 .news-panel {
   background: rgba(255, 255, 255, 0.98);
   border-radius: 20px;
@@ -440,8 +345,10 @@ onUnmounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
-  height: fit-content;
+  height: 172px; /* MISMA ALTURA EXACTA QUE EL REPRODUCTOR */
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .news-panel:hover {
@@ -459,6 +366,9 @@ onUnmounted(() => {
   background: linear-gradient(135deg, #009DDB 0%, #007DB8 100%);
   color: white;
   border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  height: 62px; /* MISMA ALTURA QUE EL HEADER DEL REPRODUCTOR */
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .news-title-container {
@@ -503,15 +413,20 @@ onUnmounted(() => {
 }
 
 .news-content {
-  padding: 25px;
+  padding: 20px 25px;
   position: relative;
-  min-height: 120px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
+  height: 110px; /* MISMA ALTURA QUE EL IFRAME DEL REPRODUCTOR */
+  box-sizing: border-box;
 }
 
 .news-item {
-  position: absolute;
-  width: calc(100% - 50px);
+  width: 100%;
+  text-align: center;
 }
 
 .news-badge {
@@ -522,32 +437,33 @@ onUnmounted(() => {
   border-radius: 12px;
   font-size: 11px;
   font-weight: 700;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .news-message {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: #1a202c;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   line-height: 1.3;
 }
 
 .news-time {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   color: #718096;
-  font-size: 14px;
+  font-size: 13px;
   margin-bottom: 0;
   font-weight: 500;
 }
 
 .news-time i {
   color: var(--primary);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 /* Transiciones para las noticias */
@@ -580,7 +496,7 @@ onUnmounted(() => {
 
 /* Estilos para la sección de canal */
 .channel-section {
-  margin-bottom: 40px;
+  margin-bottom: 30px; /* Reducido para menos espacio entre secciones */
   background: rgba(255, 255, 255, 0.95);
   padding: 30px;
   border-radius: 20px;
@@ -607,8 +523,8 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
+  margin-bottom: 25px; /* Reducido para menos espacio */
+  padding-bottom: 15px; /* Reducido para menos espacio */
   border-bottom: 2px solid rgba(0, 157, 219, 0.2);
 }
 
@@ -868,6 +784,7 @@ onUnmounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
   position: relative;
+  margin-bottom: 0; /* Eliminado margen inferior para evitar espacio excesivo */
 }
 
 .upcoming-section::before {
@@ -984,7 +901,7 @@ onUnmounted(() => {
   }
   
   .main-content {
-    padding: 100px 25px 25px 25px;
+    padding: 110px 25px 15px 25px; /* Ajustado para móviles */
   }
   
   .show-card {
@@ -998,7 +915,7 @@ onUnmounted(() => {
 
 @media (max-width: 768px) {
   .main-content {
-    padding: 90px 20px 20px 20px;
+    padding: 100px 20px 10px 20px; /* Ajustado para móviles */
   }
   
   .player-news-section {
@@ -1010,12 +927,11 @@ onUnmounted(() => {
   }
   
   .news-content {
-    padding: 20px;
-    min-height: 100px;
+    padding: 15px 20px;
   }
   
   .news-message {
-    font-size: 16px;
+    font-size: 15px;
   }
   
   .show-card {
@@ -1024,7 +940,7 @@ onUnmounted(() => {
   
   .channel-section, .upcoming-section {
     padding: 25px;
-    margin-bottom: 30px;
+    margin-bottom: 25px; /* Reducido para móviles */
   }
   
   .section-title {
@@ -1041,7 +957,7 @@ onUnmounted(() => {
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
-    padding: 15px 20px;
+    padding: 5px 20px;
   }
   
   .upcoming-item {
@@ -1063,7 +979,7 @@ onUnmounted(() => {
 
 @media (max-width: 480px) {
   .main-content {
-    padding: 80px 15px 15px 15px;
+    padding: 90px 15px 5px 15px; /* Ajustado para móviles pequeños */
   }
   
   .news-header {
@@ -1092,6 +1008,7 @@ onUnmounted(() => {
   
   .channel-section, .upcoming-section {
     padding: 20px;
+    margin-bottom: 20px; /* Reducido para móviles pequeños */
   }
   
   .section-title-container {

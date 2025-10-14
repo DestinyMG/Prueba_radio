@@ -1,7 +1,7 @@
 <template>
   <header class="main-header" :class="{ 'scrolled': isScrolled }">
     <div class="logo">
-      <img src="../assets/images/LogoFinal.png" alt="Moonlight Radio">
+      <img src="../assets/images/PORTADA.png" alt="Moonlight Radio">
     </div>
 
     <div class="search-container">
@@ -94,10 +94,10 @@ onUnmounted(() => {
   top: 0;
   left: 0;
   right: 0;
-  height: 80px;
+  height: 120px; /* Altura aumentada para logo grande */
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Distribuye logo a izquierda y búsqueda a derecha */
+  justify-content: space-between;
   padding: 0 40px;
   z-index: 200;
   background: transparent;
@@ -110,6 +110,7 @@ onUnmounted(() => {
   backdrop-filter: blur(20px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: 100px; /* Un poco más pequeño al hacer scroll */
 }
 
 .main-header .logo {
@@ -123,7 +124,7 @@ onUnmounted(() => {
 }
 
 .main-header .logo img {
-  height: 80px;
+  height: 150px; /* Logo MUY grande en desktop */
   width: auto;
   object-fit: contain;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
@@ -131,7 +132,7 @@ onUnmounted(() => {
 
 .search-container {
   display: flex;
-  justify-content: flex-end; /* Alinea la búsqueda a la derecha */
+  justify-content: flex-end;
   position: relative;
 }
 
@@ -142,7 +143,7 @@ onUnmounted(() => {
   border: 2px solid transparent;
   border-radius: 50px;
   padding: 12px 24px;
-  width: 400px; /* Ancho fijo para desktop */
+  width: 400px;
   transition: all 0.3s ease;
   position: relative;
   box-shadow: 
@@ -190,8 +191,8 @@ onUnmounted(() => {
 .search-suggestions {
   position: absolute;
   top: 100%;
-  right: 0; /* Alineado a la derecha */
-  width: 400px; /* Mismo ancho que la barra de búsqueda */
+  right: 0;
+  width: 400px;
   background: rgba(255, 255, 255, 0.98);
   border-radius: 20px;
   margin-top: 8px;
@@ -241,14 +242,19 @@ onUnmounted(() => {
 @media (max-width: 1024px) {
   .main-header {
     padding: 0 20px;
+    height: 110px; /* Altura ajustada para tablet */
+  }
+  
+  .main-header.scrolled {
+    height: 90px;
   }
   
   .main-header .logo img {
-    height: 70px;
+    height: 130px; /* Logo grande en tablet */
   }
   
   .search-bar {
-    width: 45px; /* Tamaño compacto en tablet */
+    width: 45px;
     height: 45px;
     padding: 0;
     justify-content: center;
@@ -269,7 +275,7 @@ onUnmounted(() => {
   }
   
   .search-bar.active {
-    width: 280px; /* Se expande cuando está activa */
+    width: 280px;
     padding: 12px 20px;
   }
   
@@ -288,11 +294,15 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .main-header {
     padding: 0 15px;
-    height: 70px;
+    height: 100px; /* Altura ajustada para móvil */
+  }
+  
+  .main-header.scrolled {
+    height: 80px;
   }
   
   .main-header .logo img {
-    height: 60px;
+    height: 110px; /* Logo grande en móvil */
   }
   
   .search-bar.active {
@@ -306,12 +316,16 @@ onUnmounted(() => {
 
 @media (max-width: 480px) {
   .main-header {
-    height: 60px;
+    height: 90px; /* Altura ajustada para móvil pequeño */
     padding: 0 10px;
   }
   
+  .main-header.scrolled {
+    height: 70px;
+  }
+  
   .main-header .logo img {
-    height: 50px;
+    height: 90px; /* Logo grande en móvil pequeño */
   }
   
   .search-bar.active {

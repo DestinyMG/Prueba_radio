@@ -9,4 +9,4 @@ uvicorn
 uvicorn[standard]
 gunicorn
 whitenoise
-
+pillow

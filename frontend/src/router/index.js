@@ -1,12 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 // import HelloWorld from '../components_login/HelloWorld.vue'
-import Home from '../pages/Home.vue' // ← Esta línea corregida
+import Home from '../pages/Home.vue'
 import Prueba from '../components_login/Prueba.vue'
 import Audios from '../components_login/Audios.vue'
 import Login from '../components_login/Login.vue'
 import Prueba_audio from '../components_login/Prueba_audio.vue'
 import Transmitter from '../components_login/Transmitter.vue'
-import Receiver from '../components_login/Receiver.vue'
+import newsAdmin from '../components_login/newsAdmin.vue'
+import programacionAdmin from '../components_login/programacionAdmin.vue' // ← Agregar esta línea
 
 const routes = [
     { path: '/', name: 'Home', component: Home },
@@ -15,9 +16,10 @@ const routes = [
     { path: '/login', component: Login },
     { path: '/reproducir', component: Prueba_audio },
     { path: '/transmitter', component: Transmitter },
-    { path: '/receiver', component: Receiver },
-
+    { path: '/admin/news', component: newsAdmin, name: 'news-admin', meta: { requiresAuth: true } },
+    { path: '/admin/programacion', component: programacionAdmin, name: 'programacion-admin', meta: { requiresAuth: true } }, // ← Agregar esta ruta
 ]
+
 const router = createRouter({
     history: createWebHistory(),
     routes

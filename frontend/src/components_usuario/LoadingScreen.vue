@@ -3,7 +3,7 @@
     <div class="loading-animation">
       <div class="loading-circle"></div>
       <div class="loading-logo">
-        <img src="../assets/images/LogoFinal.png" alt="Moonlight Radio">
+        <img src="../assets/images/PORTADA.png" alt="Moonlight Radio">
       </div>
     </div>
   </div>
@@ -35,8 +35,8 @@
 
 .loading-animation {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 300px;
+  height: 300px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -44,16 +44,17 @@
 
 .loading-circle {
   position: absolute;
-  width: 150%;
-  height: 150%;
-  border: 5px solid rgba(255, 255, 255, 0.2);
+  width: 280px;
+  height: 280px;
+  border: 6px solid rgba(255, 255, 255, 0.2);
   border-top-color: white;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 1.2s linear infinite;
 }
 
 .loading-logo img {
-  width: 120px;
+  width: 250px;
+  height: auto;
   animation: pulse 1.5s ease-in-out infinite alternate;
 }
 
