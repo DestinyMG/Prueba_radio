@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from datetime import timedelta
+import dj_database_url
+
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),   # token de acceso dura 15 min
@@ -37,7 +39,13 @@ SECRET_KEY = 'django-insecure-*mr3ovtpx9+0d23m$$k0gn3%_hw1l1p3p#=6x200b!r(=enuc!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    "kyeroradio.com",
+    "prueba-radio-1.onrender.com",
+    "prueba-radio.onrender.com",
+    "127.0.0.1",
+    'localhost',
+]
  
 
 # Application definition
@@ -108,10 +116,15 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Configuración de la base de datos (PostgreSQL de Render)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'database_radio',               # Nombre de tu DB en Render
+        'USER': 'radio_admin',                  # Usuario generado por Render
+        'PASSWORD': '0d7h6jWqsR6qhFb9JOUmGBLd7GXQCjMK',        # La contraseña de Render
+        'HOST': 'dpg-d3naf9euk2gs7385lgig-a', # Host que Render te dio
+        'PORT': '5432',                         # Puerto de PostgreSQL
     }
 }
 
@@ -159,7 +172,12 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://kyeroradio.com",
+    "https://prueba-radio-1.onrender.com",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
