@@ -14,7 +14,7 @@
           <label for="username">Usuario</label>
           <div class="input-container">
             <i class="fas fa-user input-icon"></i>
-            <input v-model="username" type="text" id="username" maxlength="15" required @input="filterUsername"
+            <input v-model="username" type="text" id="username" maxlength="15" required
               placeholder="Ingresa tu usuario" />
           </div>
         </div>
@@ -23,8 +23,8 @@
           <label for="password">Contraseña</label>
           <div class="input-container">
             <i class="fas fa-lock input-icon"></i>
-            <input v-model="password" :type="showPassword ? 'text' : 'password'" id="password" maxlength="12" required
-              @input="filterPassword" placeholder="Ingresa tu contraseña" />
+            <input v-model="password" :type="showPassword ? 'text' : 'password'" id="password" maxlength="128" required
+              placeholder="Ingresa tu contraseña" />
             <button type="button" class="password-toggle" @click="showPassword = !showPassword">
               <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </button>
@@ -54,21 +54,11 @@ import { useAuthStore } from '../stores/auth';
 const username = ref('');
 const password = ref('');
 const showPassword = ref(false);
-const rememberMe = ref(false);
 const isLoading = ref(false);
 const errorMessage = ref('');
 
 const router = useRouter();
 const authStore = useAuthStore();
-
-// 🔹 Filtros de entrada
-const filterUsername = () => {
-  username.value = username.value.replace(/[^a-zA-Z0-9]/g, '');
-};
-
-const filterPassword = () => {
-  password.value = password.value.replace(/[^a-zA-Z0-9]/g, '');
-};
 
 const handleLogin = async () => {
   if (!username.value || !password.value) {
@@ -76,14 +66,26 @@ const handleLogin = async () => {
     return;
   }
 
+  // Quitar espacios al inicio/final
+  const user = username.value.trim();
+  const pass = password.value.trim();
+
   isLoading.value = true;
   errorMessage.value = '';
 
   try {
-    const response = await axios.post('https://prueba-radio.onrender.com/api/login/token/', {
-      username: username.value,
-      password: password.value
-    });
+    const response = await axios.post(
+      'https://prueba-radio.onrender.com/api/login/token/',
+      {
+        username: user,
+        password: pass
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
 
     // Guardar tokens en Pinia
     authStore.setTokens(response.data);
@@ -99,6 +101,7 @@ const handleLogin = async () => {
   }
 };
 </script>
+
 
 <style scoped>
 .login-wrapper {
