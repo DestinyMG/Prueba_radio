@@ -231,7 +231,7 @@ import { ref, onMounted, computed } from 'vue';
 import BaseAdmin from './BaseAdmin.vue';
 
 // Constante base para la API
-const API_BASE_URL = 'https://prueba-radio.onrender.com/api5';
+const API_BASE_URL = 'https://prueba-radio.onrender.com/api4';
 
 // Variables reactivas
 const programas = ref([]);

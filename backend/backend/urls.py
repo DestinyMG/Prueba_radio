@@ -26,7 +26,7 @@ urlpatterns = [
     path('api2/', include('aviso.urls')),
     path('api3/', include('streaming_confirmation.urls')),
     path('api4/', include('news.urls')),  # Incluye las URLs de tu app news
-    path('api5/', include('programacion.urls')),
+    path('api4/', include('programacion.urls')),
    
 ]
 
