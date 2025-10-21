@@ -391,7 +391,7 @@ const clearStreamingPolling = () => {
 
 const checkAvisoStatus = async () => {
     try {
-        const response = await axios.get('https://prueba-radio.onrender.com/api2/aviso/2/')
+        const response = await axios.get('https://prueba-radio.onrender.com/api2/aviso/1/')
         const avisoData = response.data
 
         const currentState = JSON.stringify(avisoData)

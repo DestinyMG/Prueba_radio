@@ -10,7 +10,7 @@
                 <h1><i class="fas fa-headphones"></i> Mis Audios</h1>
                 <div class="header-actions">
                     <button class="stream-button" @click="showStreamModal = true">
-                        <i class="fas fa-microphone"></i>
+                        <i class="fas fa-microphone"></i> 
                         {{ streamingStatus ? 'Transmisión Activa' : 'Transmisión en Vivo' }}
                     </button>
                     <button class="upload-button" @click="showModal = true">
@@ -79,8 +79,12 @@
                         </div>
 
                         <!-- Botón play/stop -->
-                        <button class="play-button" :class="{ playing: isAudioActive(audio.id) }"
-                            @click="toggleAudioActivation(audio)" :disabled="streamingStatus">
+                        <button 
+                            class="play-button" 
+                            :class="{ playing: isAudioActive(audio.id) }"
+                            @click="toggleAudioActivation(audio)"
+                            :disabled="streamingStatus"
+                        >
                             <i class="fas" :class="isAudioActive(audio.id) ? 'fa-stop' : 'fa-play'"></i>
                             {{ isAudioActive(audio.id) ? 'Detener' : streamingStatus ? 'Streaming Activo' : 'Activar' }}
                         </button>
@@ -110,13 +114,13 @@
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-
+                    
                     <div class="stream-controls">
                         <div class="stream-status" :class="{ live: isStreaming, connecting: isConnecting }">
                             <div class="status-indicator"></div>
                             <span>
-                                {{ isConnecting ? 'CONECTANDO...' :
-                                    isStreaming ? 'TRANSMITIENDO EN VIVO' : 'LISTO PARA TRANSMITIR' }}
+                                {{ isConnecting ? 'CONECTANDO...' : 
+                                   isStreaming ? 'TRANSMITIENDO EN VIVO' : 'LISTO PARA TRANSMITIR' }}
                             </span>
                         </div>
 
@@ -133,16 +137,20 @@
                             </div>
                         </div>
 
-                        <button class="stream-toggle-button"
-                            :class="{ streaming: isStreaming, connecting: isConnecting }" @click="toggleStreaming"
-                            :disabled="isConnecting">
+                        <button 
+                            class="stream-toggle-button" 
+                            :class="{ streaming: isStreaming, connecting: isConnecting }"
+                            @click="toggleStreaming"
+                            :disabled="isConnecting"
+                        >
                             <div class="button-content">
-                                <i class="fas" :class="isConnecting ? 'fa-spinner fa-spin' :
+                                <i class="fas" :class="
+                                    isConnecting ? 'fa-spinner fa-spin' :
                                     isStreaming ? 'fa-stop-circle' : 'fa-microphone'
-                                    "></i>
+                                "></i>
                                 <span class="button-text">
                                     {{ isConnecting ? 'CONECTANDO...' :
-                                        isStreaming ? 'DETENER TRANSMISIÓN' : 'INICIAR TRANSMISIÓN' }}
+                                       isStreaming ? 'DETENER TRANSMISIÓN' : 'INICIAR TRANSMISIÓN' }}
                                 </span>
                             </div>
                             <div v-if="isStreaming" class="button-status">
@@ -241,21 +249,21 @@ const checkMicrophonePermission = async () => {
         }
 
         // Solicitar permisos de manera más específica
-        const testStream = await navigator.mediaDevices.getUserMedia({
+        const testStream = await navigator.mediaDevices.getUserMedia({ 
             audio: {
                 echoCancellation: true,
                 noiseSuppression: true,
                 autoGainControl: false
-            }
+            } 
         });
-
+        
         // Liberar stream de prueba inmediatamente
         testStream.getTracks().forEach(track => track.stop());
-
+        
         return true;
     } catch (error) {
         console.error('Error verificando permisos:', error);
-
+        
         if (error.name === 'NotAllowedError') {
             status.value = 'Error: Permisos de micrófono denegados. Por favor permite el acceso al micrófono.';
         } else if (error.name === 'NotFoundError') {
@@ -263,7 +271,7 @@ const checkMicrophonePermission = async () => {
         } else {
             status.value = `Error de micrófono: ${error.message}`;
         }
-
+        
         return false;
     }
 };
@@ -273,14 +281,14 @@ const forceReconnect = async () => {
     if (isStreaming.value) {
         await stopStreaming();
     }
-
+    
     connectionError.value = false;
     reconnectAttempts = 0;
     status.value = 'Reconectando...';
-
+    
     // Pequeña pausa antes de reconectar
     await new Promise(resolve => setTimeout(resolve, 1500));
-
+    
     await startStreaming();
 };
 
@@ -319,7 +327,7 @@ const startStreaming = async () => {
             '• Los oyentes escucharán tu micrófono\n\n' +
             '¿Deseas continuar?'
         );
-
+        
         if (!confirmar) return;
         await setAvisoActivo(false);
     }
@@ -355,13 +363,13 @@ const startStreaming = async () => {
                 clearTimeout(connectionTimeout);
                 resolve();
             };
-
+            
             ws.onerror = (error) => {
                 console.error('❌ Error WebSocket:', error);
                 clearTimeout(connectionTimeout);
                 reject(new Error('Error de conexión con el servidor de streaming'));
             };
-
+            
             ws.onclose = (event) => {
                 clearTimeout(connectionTimeout);
                 if (!event.wasClean && isConnecting.value) {
@@ -373,7 +381,7 @@ const startStreaming = async () => {
         status.value = 'Configurando audio...';
 
         // Configuración de audio optimizada
-        stream = await navigator.mediaDevices.getUserMedia({
+        stream = await navigator.mediaDevices.getUserMedia({ 
             audio: {
                 channelCount: 1,
                 sampleRate: 48000,
@@ -381,7 +389,7 @@ const startStreaming = async () => {
                 noiseSuppression: true,
                 autoGainControl: false,
                 latency: 0.01
-            }
+            } 
         });
 
         // AudioContext optimizado
@@ -389,7 +397,7 @@ const startStreaming = async () => {
             sampleRate: 48000,
             latencyHint: 'interactive'
         });
-
+        
         const source = audioContext.createMediaStreamSource(stream);
 
         // Processor optimizado
@@ -401,7 +409,7 @@ const startStreaming = async () => {
             try {
                 const inputData = event.inputBuffer.getChannelData(0);
                 const int16Data = floatTo16BitPCM(inputData);
-
+                
                 if (ws.readyState === WebSocket.OPEN) {
                     ws.send(int16Data);
                 }
@@ -430,26 +438,26 @@ const startStreaming = async () => {
 
     } catch (error) {
         console.error('❌ Error iniciando streaming:', error);
-
+        
         // Mejor manejo de errores
         isConnecting.value = false;
         connectionError.value = true;
         reconnectAttempts++;
-
+        
         let errorMessage = error.message;
-
+        
         // Mensajes de error más específicos
         if (errorMessage.includes('Timeout')) {
             errorMessage = 'El servidor no respondió. Verifica tu conexión a internet.';
         } else if (errorMessage.includes('permisos')) {
             errorMessage = 'Permisos de micrófono requeridos. Por favor permite el acceso.';
         }
-
+        
         if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
             status.value = `❌ ${errorMessage}. Reintentos agotados.`;
         } else {
             status.value = `⚠️ ${errorMessage}. Reintentando... (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`;
-
+            
             // Reintentar automáticamente después de un tiempo progresivo
             const retryDelay = Math.min(2000 * reconnectAttempts, 10000);
             setTimeout(() => {
@@ -458,7 +466,7 @@ const startStreaming = async () => {
                 }
             }, retryDelay);
         }
-
+        
         // Limpiar recursos en caso de error
         await cleanupStreamingResources();
     }
@@ -555,28 +563,28 @@ const getAudioDuration = (audioFile) => {
     return new Promise((resolve) => {
         const audio = new Audio();
         audio.preload = 'metadata';
-
+        
         // Manejar CORS si es necesario
         audio.crossOrigin = 'anonymous';
-
-        audio.src = audioFile.startsWith('http')
-            ? audioFile
-            : `https://prueba-radio.onrender.com${audioFile}`;
-
+        
+        audio.src = audioFile.startsWith('http') 
+            ? audioFile 
+            : `http://localhost:8000${audioFile}`;
+        
         const timeout = setTimeout(() => {
             resolve(60); // Fallback a 60 segundos
         }, 5000);
-
+        
         audio.addEventListener('loadedmetadata', () => {
             clearTimeout(timeout);
             resolve(Math.ceil(audio.duration));
         });
-
+        
         audio.addEventListener('error', () => {
             clearTimeout(timeout);
             resolve(60); // Fallback a 60 segundos
         });
-
+        
         // Forzar carga
         audio.load();
     });
@@ -585,11 +593,11 @@ const getAudioDuration = (audioFile) => {
 // 🔥 CORREGIDO: Sistema mejorado de programación de audios
 const startAudioDurationCheck = (audioId, duration) => {
     stopAudioDurationCheck();
-
+    
     let timeElapsed = 0;
     audioDurationCheckInterval = setInterval(async () => {
         timeElapsed += 1;
-
+        
         // 🔥 MEJORADO: Tolerancia de +5 segundos para evitar cortes prematuros
         if (timeElapsed >= duration + 5) {
             await stopAudioAutomatically(audioId);
@@ -609,10 +617,10 @@ const stopAudioAutomatically = async (audioId) => {
         console.log(`🛑 Deteniendo audio ${audioId} automáticamente (duración completada)`);
         await setAvisoActivo(false);
         stopAudioDurationCheck();
-
+        
         // 🔥 NUEVO: Marcar como reproducido para evitar repeticiones
         lastPlayedAudios.value.add(audioId);
-
+        
         // 🔥 NUEVO: Limpiar historial después de 1 hora para permitir repeticiones programadas
         setTimeout(() => {
             lastPlayedAudios.value.delete(audioId);
@@ -622,7 +630,7 @@ const stopAudioAutomatically = async (audioId) => {
 
 const checkStreamingStatus = async () => {
     try {
-        const response = await axios.get('https://prueba-radio.onrender.com/api3/');
+        const response = await axios.get('http://localhost:8000/api3/');
         streamingStatus.value = response.data.activate;
     } catch (error) {
         console.debug('Error verificando estado de streaming:', error);
@@ -633,53 +641,53 @@ const checkStreamingStatus = async () => {
 const setAvisoActivo = async (activo, audioId = null, audioFile = null) => {
     try {
         await checkStreamingStatus();
-
+        
         if (activo && streamingStatus.value) {
             const confirmar = confirm(
                 '⚠️ Hay una transmisión en vivo activa.\n\n' +
                 'Si activas este audio, la transmisión en vivo se detendrá.\n\n' +
                 '¿Deseas continuar?'
             );
-
+            
             if (!confirmar) {
                 return;
             }
-
+            
             await updateStreamingStatus(false);
         }
 
         let payload;
-
+        
         if (activo && audioId) {
             // 🔥 NUEVO: Verificar si ya fue reproducido recientemente
             if (lastPlayedAudios.value.has(audioId)) {
                 console.log(`⏭️ Audio ${audioId} ya fue reproducido recientemente, omitiendo...`);
                 return;
             }
-
+            
             payload = {
                 activo: true,
                 audio_id: audioId
             };
-
+            
             if (audioFile) {
                 const duration = await getAudioDuration(audioFile);
                 console.log(`🎵 Audio ${audioId} duración: ${duration} segundos`);
                 startAudioDurationCheck(audioId, duration);
             }
         } else {
-            payload = {
+            payload = { 
                 activo: false
             };
             stopAudioDurationCheck();
         }
 
-        const response = await axios.put('https://prueba-radio.onrender.com/api2/aviso/2/', payload, {
+        const response = await axios.put('http://localhost:8000/api2/aviso/2/', payload, {
             headers: {
                 'Content-Type': 'application/json'
             }
         });
-
+        
         if (activo && audioId) {
             activeAudioId.value = audioId;
             console.log(`▶️ Audio ${audioId} activado`);
@@ -687,9 +695,9 @@ const setAvisoActivo = async (activo, audioId = null, audioFile = null) => {
             activeAudioId.value = null;
             console.log('⏹️ Audio desactivado');
         }
-
+        
         return response.data;
-
+        
     } catch (error) {
         console.error('Error actualizando el audio:', error);
         alert('Error actualizando el audio');
@@ -699,10 +707,10 @@ const setAvisoActivo = async (activo, audioId = null, audioFile = null) => {
 
 const updateStreamingStatus = async (isActive) => {
     try {
-        const response = await axios.put('https://prueba-radio.onrender.com/api3/', {
+        const response = await axios.put('http://localhost:8000/api3/', {
             activate: isActive
         });
-
+        
         streamingStatus.value = isActive;
         console.log(`📡 Estado de streaming actualizado: ${isActive}`);
         return response.data;
@@ -730,15 +738,15 @@ const toggleAudioActivation = async (audio) => {
                     '• Los oyentes escucharán este audio\n\n' +
                     '¿Deseas continuar?'
                 );
-
+                
                 if (!confirmar) return;
                 await updateStreamingStatus(false);
             }
-
+            
             if (activeAudioId.value) {
                 await setAvisoActivo(false);
             }
-
+            
             await setAvisoActivo(true, audio.id, audio.file);
         }
         await fetchAudios();
@@ -750,35 +758,35 @@ const toggleAudioActivation = async (audio) => {
 // 🔥 CORREGIDO: Sistema mejorado de programación de audios
 const checkScheduledAudios = async () => {
     await checkStreamingStatus();
-
+    
     // No programar audios si hay streaming activo
     if (streamingStatus.value) {
         return;
     }
-
+    
     const now = new Date();
-
+    
     for (const audio of audios.value) {
         const scheduledTime = new Date(audio.play_date);
         const timeDiff = scheduledTime - now;
-
+        
         // 🔥 MEJORADO: Margen de ±2 segundos para evitar repeticiones
         if (timeDiff >= -2000 && timeDiff <= 2000 && !isAudioActive(audio.id)) {
-
+            
             // 🔥 NUEVO: Verificar si ya fue reproducido recientemente
             if (lastPlayedAudios.value.has(audio.id)) {
                 console.log(`⏭️ Audio programado ${audio.id} omitido (ya reproducido)`);
                 continue;
             }
-
+            
             try {
                 console.log(`🕐 Activando audio programado: ${audio.title}`);
                 await setAvisoActivo(true, audio.id, audio.file);
                 await fetchAudios();
-
+                
                 // 🔥 NUEVO: Marcar como programado para evitar repeticiones
                 lastPlayedAudios.value.add(audio.id);
-
+                
             } catch (error) {
                 console.error(`❌ Error activando audio programado ${audio.id}:`, error);
             }
@@ -791,7 +799,7 @@ const fetchAudios = async () => {
         const response = await api.get('audios/');
         audios.value = response.data.map(audio => ({
             ...audio,
-            file: audio.file.startsWith('http') ? audio.file : `https://prueba-radio.onrender.com${audio.file}`
+            file: audio.file.startsWith('http') ? audio.file : `http://localhost:8000${audio.file}`
         }));
     } catch (error) {
         console.error('Error cargando audios:', error);
@@ -806,10 +814,10 @@ const deleteAudio = async (id) => {
             }
             await api.delete(`audios/${id}/`);
             audios.value = audios.value.filter(a => a.id !== id);
-
+            
             // 🔥 NUEVO: Limpiar de lastPlayedAudios si existe
             lastPlayedAudios.value.delete(id);
-
+            
         } catch (error) {
             alert('Error al eliminar el audio');
         }
@@ -837,12 +845,12 @@ const handleSaved = () => {
 onMounted(() => {
     fetchAudios();
     checkStreamingStatus();
-
+    
     // 🔥 MEJORADO: Intervalos optimizados
     scheduleInterval = setInterval(checkScheduledAudios, 2000); // Revisar cada 2 segundos
     setInterval(checkStreamingStatus, 5000); // Cada 5 segundos
     setInterval(fetchAudios, 30000); // Cada 30 segundos
-
+    
     console.log('🎵 Sistema de audio inicializado');
 });
 
@@ -850,10 +858,10 @@ onUnmounted(() => {
     if (scheduleInterval) {
         clearInterval(scheduleInterval);
     }
-
+    
     stopAudioDurationCheck();
     stopStreaming();
-
+    
     console.log('🛑 Sistema de audio limpiado');
 });
 </script>
@@ -900,8 +908,7 @@ onUnmounted(() => {
     gap: 15px;
 }
 
-.stream-button,
-.upload-button {
+.stream-button, .upload-button {
     padding: 12px 20px;
     border: none;
     border-radius: 8px;
@@ -944,7 +951,7 @@ onUnmounted(() => {
     background: white;
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     display: flex;
     align-items: center;
     gap: 15px;
@@ -972,7 +979,7 @@ onUnmounted(() => {
 }
 
 .live-indicator.live .stat-icon {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255,255,255,0.2);
 }
 
 .stat-info h3 {
@@ -988,7 +995,7 @@ onUnmounted(() => {
 }
 
 .live-indicator.live .stat-info p {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255,255,255,0.9);
 }
 
 .audio-grid {
@@ -1000,14 +1007,14 @@ onUnmounted(() => {
 .audio-card {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     overflow: hidden;
     transition: all 0.3s ease;
 }
 
 .audio-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 
 .card-main-content {
@@ -1155,7 +1162,7 @@ onUnmounted(() => {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0,0,0,0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1170,7 +1177,7 @@ onUnmounted(() => {
     max-width: 500px;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
 .modal-header {
@@ -1241,17 +1248,9 @@ onUnmounted(() => {
 }
 
 @keyframes pulse-live {
-    0% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.5;
-    }
-
-    100% {
-        opacity: 1;
-    }
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
 }
 
 .stream-info {
@@ -1382,27 +1381,27 @@ onUnmounted(() => {
     .admin-container {
         padding: 15px;
     }
-
+    
     .page-header {
         flex-direction: column;
         gap: 15px;
         align-items: flex-start;
     }
-
+    
     .header-actions {
         width: 100%;
         justify-content: space-between;
     }
-
+    
     .audio-grid {
         grid-template-columns: 1fr;
     }
-
+    
     .card-footer {
         flex-direction: column;
         align-items: stretch;
     }
-
+    
     .card-actions {
         justify-content: center;
     }

@@ -106,7 +106,9 @@ const currentNewsIndex = ref(0)
 
 // Variables para programas desde BD
 const programas = ref([])
-const API_BASE_URL = 'https://prueba-radio.onrender.com/api4'
+// CORRECCIÓN: URLs separadas para cada API
+const API_NEWS_URL = 'https://prueba-radio.onrender.com/api4'
+const API_PROGRAMAS_URL = 'https://prueba-radio.onrender.com/api5'
 
 // Función para formatear hora de 24h a 12h (AM/PM)
 const formatTime = (timeString) => {
@@ -129,30 +131,34 @@ const formatTime = (timeString) => {
   return `${hour}:${minutes} ${ampm}`
 }
 
-// Cargar programas desde la API
+// Cargar programas desde la API (usa api5)
 const fetchProgramas = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/programas/`)
+    const response = await fetch(`${API_PROGRAMAS_URL}/programas/`)
     if (response.ok) {
       const data = await response.json()
       // Filtrar solo programas activos
       programas.value = data.filter(programa => programa.is_active)
-      console.log('Programas cargados:', programas.value) // Para debug
+      console.log('Programas cargados:', programas.value)
+    } else {
+      console.error('Error en respuesta de programas:', response.status)
     }
   } catch (error) {
     console.error('Error cargando programas:', error)
   }
 }
 
-// Cargar noticias desde la API
+// Cargar noticias desde la API (usa api4)
 const fetchNews = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/news/`)
+    const response = await fetch(`${API_NEWS_URL}/news/`)
     if (response.ok) {
       const data = await response.json()
       // Filtrar solo noticias activas
       newsItems.value = data.filter(news => news.is_active)
-      console.log('Noticias cargadas:', newsItems.value) // Para debug
+      console.log('Noticias cargadas:', newsItems.value)
+    } else {
+      console.error('Error en respuesta de noticias:', response.status)
     }
   } catch (error) {
     console.error('Error cargando noticias:', error)
@@ -226,12 +232,7 @@ onMounted(async () => {
   }, 30000)
 })
 
-onUnmounted(() => {
-  if (newsInterval) {
-    clearInterval(newsInterval)
-  }
-})
-
+// CORRECCIÓN: Solo un onUnmounted
 onUnmounted(() => {
   if (newsInterval) {
     clearInterval(newsInterval)

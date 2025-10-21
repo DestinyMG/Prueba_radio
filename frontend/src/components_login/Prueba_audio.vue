@@ -12,7 +12,7 @@ const audioPlayer = ref(null);
 
 onMounted(async () => {
     try {
-        const response = await fetch("http://localhost:8000/api2/aviso/2/");
+        const response = await fetch("https://prueba-radio.onrender.com/api2/aviso/1/");
         aviso.value = await response.json();
 
         if (aviso.value.activo && aviso.value.audio_file) {
