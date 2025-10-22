@@ -97,7 +97,8 @@ const transitionDirection = ref('slide-next')
 
 // Variables para programas desde BD
 const programas = ref([])
-const API_BASE_URL = 'https://prueba-radio.onrender.com/api4'
+// CORRECCIÓN: Solo una definición de API_BASE_URL
+const API_BASE_URL = 'https://prueba-radio.onrender.com/api5'
 
 // Función para formatear hora de 24h a 12h (AM/PM)
 const formatTime = (timeString) => {
@@ -129,6 +130,8 @@ const fetchProgramas = async () => {
       // Filtrar solo programas activos
       programas.value = data.filter(programa => programa.is_active)
       console.log('Programas cargados:', programas.value) // Para debug
+    } else {
+      console.error('Error en respuesta de programas:', response.status)
     }
   } catch (error) {
     console.error('Error cargando programas:', error)
@@ -138,12 +141,15 @@ const fetchProgramas = async () => {
 // Cargar noticias desde la API
 const fetchNews = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/news/`)
+    // CORRECCIÓN: Las noticias están en api4, no en api5
+    const response = await fetch('https://prueba-radio.onrender.com/api4/news/')
     if (response.ok) {
       const data = await response.json()
       // Filtrar solo noticias activas
       newsItems.value = data.filter(news => news.is_active)
       console.log('Noticias cargadas:', newsItems.value) // Para debug
+    } else {
+      console.error('Error en respuesta de noticias:', response.status)
     }
   } catch (error) {
     console.error('Error cargando noticias:', error)
@@ -223,7 +229,6 @@ onUnmounted(() => {
   }
 })
 </script>
-
 <style scoped>
 .main-content {
   margin: 0;
