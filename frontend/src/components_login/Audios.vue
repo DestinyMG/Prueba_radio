@@ -138,7 +138,7 @@
                             :disabled="isConnecting">
                             <div class="button-content">
                                 <i class="fas" :class="isConnecting ? 'fa-spinner fa-spin' :
-                                        isStreaming ? 'fa-stop-circle' : 'fa-microphone'
+                                    isStreaming ? 'fa-stop-circle' : 'fa-microphone'
                                     "></i>
                                 <span class="button-text">
                                     {{ isConnecting ? 'CONECTANDO...' :
@@ -622,7 +622,7 @@ const stopAudioAutomatically = async (audioId) => {
 
 const checkStreamingStatus = async () => {
     try {
-        const response = await axios.get('http://localhost:8000/api3/');
+        const response = await axios.get('https://prueba-radio.onrender.com/api3/');
         streamingStatus.value = response.data.activate;
     } catch (error) {
         console.debug('Error verificando estado de streaming:', error);
@@ -674,7 +674,7 @@ const setAvisoActivo = async (activo, audioId = null, audioFile = null) => {
             stopAudioDurationCheck();
         }
 
-        const response = await axios.put('http://localhost:8000/api2/aviso/2/', payload, {
+        const response = await axios.put('https://prueba-radio.onrender.com/api2/aviso/1/', payload, {
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -699,7 +699,7 @@ const setAvisoActivo = async (activo, audioId = null, audioFile = null) => {
 
 const updateStreamingStatus = async (isActive) => {
     try {
-        const response = await axios.put('http://localhost:8000/api3/', {
+        const response = await axios.put('https://prueba-radio.onrender.com/api3/', {
             activate: isActive
         });
 
@@ -791,7 +791,7 @@ const fetchAudios = async () => {
         const response = await api.get('audios/');
         audios.value = response.data.map(audio => ({
             ...audio,
-            file: audio.file.startsWith('http') ? audio.file : `http://localhost:8000${audio.file}`
+            file: audio.file.startsWith('http') ? audio.file : `https://prueba-radio.onrender.com${audio.file}`
         }));
     } catch (error) {
         console.error('Error cargando audios:', error);
